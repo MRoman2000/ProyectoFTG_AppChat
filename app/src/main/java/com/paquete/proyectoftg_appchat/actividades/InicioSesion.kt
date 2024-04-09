@@ -21,6 +21,9 @@ class InicioSesion : AppCompatActivity() {
         setupListeners()
     }
 
+
+
+
     private fun setupListeners() {
         binding.textViewRegistrarse.setOnClickListener {
             startActivity(Intent(this, NumeroVertificacion::class.java))
