@@ -63,7 +63,6 @@ class ChannelAdapter(val context: Context,
             FirebaseUtils.getOtrosUser(chatRoom.userIds)?.get()?.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     otherUserModel = task.result.toObject(DataUser::class.java)
-
                     val numero = otherUserModel?.telefono
                     binding.textViewDate.text = sdf.format(chatRoom.lastMessageTimestamp!!.toDate())
                     //    val foto =     otherUserModel?.let { loadProfileImage(it.uid) }
@@ -75,18 +74,18 @@ class ChannelAdapter(val context: Context,
                         val channelId = chatRoom.chatroomId
                         val participants = chatRoom.userIds
                         val recipientId = participants?.firstOrNull { it != FirebaseAuth.getInstance().currentUser?.uid }
-                        val nombreRemitente = usuario?.nombre.toString()
+                        val nombreRemitente = usuario?.nombre ?: numero
                         GlobalScope.launch {
                             db.datosDao().insertar(DataUser(otherUserModel!!.uid,
                                 otherUserModel!!.email,
                                 "",
-                                usuario?.nombre,
+                                nombreRemitente,
                                 otherUserModel!!.nombreUsuario,
                                 usuario?.numero,
                                 otherUserModel!!.imageUrl))
                         }
                         itemView.setOnClickListener {
-                            val messageFragment = MessageFragment.newInstance(channelId, recipientId.toString(), nombreRemitente)
+                            val messageFragment = MessageFragment.newInstance(channelId, recipientId.toString(), nombreRemitente.toString())
                             Utils.navigateToFragment(activity = context as FragmentActivity, fragment = messageFragment)
                         }
                         elementosViewModel.obtenerDatosUsuario(otherUserModel?.uid).observe((context as FragmentActivity)) { usuario ->

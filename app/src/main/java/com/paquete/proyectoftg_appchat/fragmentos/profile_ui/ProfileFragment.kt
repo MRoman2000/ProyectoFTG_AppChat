@@ -55,10 +55,8 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        elementosViewModel = ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
 
-
-
-        elementosViewModel = ViewModelProvider(requireActivity()).get(ElementosViewModel::class.java)
         elementosViewModel.elementos.observe(viewLifecycleOwner) { elementos ->
             // Filtrar los elementos para obtener solo los del usuario actual
             val usuarioActual = FirebaseAuth.getInstance().currentUser
@@ -70,6 +68,7 @@ class ProfileFragment : Fragment() {
                 binding.editTextNombreCompleto.setText(primerElemento.nombreCompleto ?: "")
                 binding.editTextNombreUsuario.setText(primerElemento.nombreUsuario ?: "")
                 binding.editTextTelefono.setText(primerElemento.telefono ?: "")
+            //    binding.editTextTelefono.setText(primerElemento.email ?: "")
             }
         }
 

@@ -53,8 +53,8 @@
             <!-- Imagen de perfil -->
             <ImageView
                 android:id="@+id/imagen_perfil"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
                 android:layout_gravity="center"
                 android:background="@drawable/round_button"
                 android:scaleType="centerCrop"
