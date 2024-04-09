@@ -63,7 +63,6 @@ class ChannelAdapter(val context: Context,
             FirebaseUtils.getOtrosUser(chatRoom.userIds)?.get()?.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     otherUserModel = task.result.toObject(DataUser::class.java)
-
                     val numero = otherUserModel?.telefono
                     binding.textViewDate.text = sdf.format(chatRoom.lastMessageTimestamp!!.toDate())
                     //    val foto =     otherUserModel?.let { loadProfileImage(it.uid) }

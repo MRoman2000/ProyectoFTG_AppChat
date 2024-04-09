@@ -73,11 +73,17 @@ class MessageFragment : Fragment() {
         val nombreRemitente = arguments?.getString("nombreRemitente")
         val imageUrl = arguments?.getString("imagenRemitente")
 
+        elementosViewModel.obtenerDatosUsuario(recipientId).observe(viewLifecycleOwner) { usuario ->
+            usuario?.let {
+                // Si los datos del usuario están disponibles, úsalos
+                binding.nameUser.text = usuario.nombreCompleto
+                Glide.with(requireContext()).load(usuario.imageUrl).apply(RequestOptions.circleCropTransform()).into(binding.imageProfile)
+            }
+        }
         recuperarMensajes(channelId.toString())
 
         val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
         bottomNavigationView.visibility = View.GONE
-
 
         val sendButton = binding.btnSendMessage
 
@@ -88,8 +94,8 @@ class MessageFragment : Fragment() {
         }
 
 
-        binding.nameUser.text = nombreRemitente
-        Glide.with(requireContext()).load(imageUrl).apply(RequestOptions.circleCropTransform()).into(binding.imageProfile)
+        //      binding.nameUser.text = nombreRemitente
+        //     Glide.with(requireContext()).load(imageUrl).apply(RequestOptions.circleCropTransform()).into(binding.imageProfile)
 
     }
 
