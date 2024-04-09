@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/Contactos"
+        android:enabled="true"
+        android:icon="@drawable/ic_menu_contact"
+        android:title="Contactos" />
+    <item
+        android:id="@+id/Chat"
+        android:enabled="true"
+        android:icon="@drawable/ic_menu_chat"
+        android:title="Chat" />
+    <item
+        android:id="@+id/Configuracion"
+        android:enabled="true"
+        android:icon="@drawable/ic_menu_settings"
+        android:title="@string/configuracion" />
+</menu>

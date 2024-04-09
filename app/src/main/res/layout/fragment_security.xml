@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragmentos.profile_ui.SecurityFragment">
+
+    <RelativeLayout
+        android:id="@+id/layout_delete_account"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/round_configuracion"
+        android:clipToOutline="true"
+        android:focusable="true"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/texto_Logout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="Eliminar Cuenta"
+            android:textAlignment="center"
+            android:textColor="@color/rojo" />
+    </RelativeLayout>
+
+</FrameLayout>

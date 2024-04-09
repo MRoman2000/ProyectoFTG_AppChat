@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "889486479637",
+    "project_id": "proyectoftg-aae43",
+    "storage_bucket": "proyectoftg-aae43.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:889486479637:android:4d48f474565d7c8185591c",
+        "android_client_info": {
+          "package_name": "com.paquete.proyectoftg_appchat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlHHhfHqXqlDDyNofw-fwaELaVj2FZcRU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

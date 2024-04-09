@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation"
+    app:startDestination="@layout/fragment_chat_room">
+
+        <fragment
+            android:id="@+id/mostrarPerfilFragment"
+            android:name="com.paquete.proyectoftg_appchat.fragmentos.MostrarPerfilFragment"
+            android:label="Mostrar Perfil"
+            tools:layout="@layout/fragment_datos_contacto" >
+            <action
+                android:id="@+id/action_mostrarPerfilFragment_to_messageFragment2"
+                app:destination="@id/messageFragment" />
+        </fragment>
+
+        <fragment
+            android:id="@+id/messageFragment"
+            android:name="com.paquete.proyectoftg_appchat.fragmentos.MessageFragment"
+            android:label="Mensaje"
+            tools:layout="@layout/fragment_message" />
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.paquete.proyectoftg_appchat.fragmentos.ChatFragment"
+        android:label="fragment_chat"
+        tools:layout="@layout/fragment_chat_room" />
+
+
+</navigation>
