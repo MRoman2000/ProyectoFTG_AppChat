@@ -90,7 +90,6 @@ class ChannelAdapter(val context: Context,
                         }
                         elementosViewModel.obtenerDatosUsuario(otherUserModel?.uid).observe((context as FragmentActivity)) { usuario ->
                             usuario?.let {
-                                // Si los datos del usuario están disponibles, úsalos
                                 binding.textViewUser.text = usuario.nombreCompleto
                                 Glide.with(context).load(usuario.imageUrl).apply(RequestOptions.circleCropTransform())
                                     .into(binding.imagenPerfil.imageView)

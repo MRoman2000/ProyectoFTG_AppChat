@@ -75,7 +75,6 @@ class MessageFragment : Fragment() {
 
         elementosViewModel.obtenerDatosUsuario(recipientId).observe(viewLifecycleOwner) { usuario ->
             usuario?.let {
-                // Si los datos del usuario están disponibles, úsalos
                 binding.nameUser.text = usuario.nombreCompleto
                 Glide.with(requireContext()).load(usuario.imageUrl).apply(RequestOptions.circleCropTransform()).into(binding.imageProfile)
             }
