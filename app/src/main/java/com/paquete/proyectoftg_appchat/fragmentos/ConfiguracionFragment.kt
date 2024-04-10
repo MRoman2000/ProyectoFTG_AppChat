@@ -16,12 +16,12 @@ import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.firebase.auth.FirebaseAuth
 import com.paquete.proyectoftg_appchat.R
 import com.paquete.proyectoftg_appchat.actividades.SplashActivity
 import com.paquete.proyectoftg_appchat.databinding.FragmentConfiguracionBinding
 import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.ProfileFragment
 import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.SecurityFragment
+import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import com.paquete.proyectoftg_appchat.utils.Utils
@@ -32,6 +32,7 @@ class ConfiguracionFragment : Fragment() {
     private val elementosViewModel by lazy {
         ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
     }
+    private var userData: DataUser? = null
     private val PREFS_KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
     private val PREFS_KEY_THEME = "theme_preference"
     private var _binding: FragmentConfiguracionBinding? = null
@@ -47,18 +48,24 @@ class ConfiguracionFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
 
-        val usuarioActual = FirebaseAuth.getInstance().currentUser
-        val uidUsuarioActual = usuarioActual?.uid
-        elementosViewModel.obtenerElementoUsuarioActual(uidUsuarioActual)
+        val usuarioActual = FirebaseUtils.getCurrentUserId()
 
-        elementosViewModel.elementoUsuarioActual.observe(viewLifecycleOwner) { datauser ->
+        elementosViewModel.obtenerDatosYElementoUsuarioActual(usuarioActual).observe(viewLifecycleOwner) { datauser ->
             datauser?.let {
+                userData = datauser
                 loadImageFromUrl(it.imageUrl.toString(), binding.imagenPerfil)
                 binding.textNombreCompleto.text = it.nombreCompleto ?: ""
                 binding.textNombreUsuario.text = it.nombreUsuario ?: ""
             }
         }
 
+        binding.layoutProfile.setOnClickListener {
+            val profileFragment = ProfileFragment()
+            val bundle = Bundle()
+            bundle.putParcelable("userData", userData)
+            profileFragment.arguments = bundle
+            Utils.navigateToFragment(requireActivity(), profileFragment)
+        }
 
         binding.switchNotification.isChecked = areNotificationsEnabled()
 
@@ -134,10 +141,7 @@ class ConfiguracionFragment : Fragment() {
             builder.show()
         }
 
-        binding.layoutProfile.setOnClickListener {
-            val profileFragment = ProfileFragment()
-            Utils.navigateToFragment(requireActivity(), profileFragment)
-        }
+
 
 
         binding.layoutLogout.setOnClickListener {

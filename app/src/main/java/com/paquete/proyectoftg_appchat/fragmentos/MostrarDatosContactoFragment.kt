@@ -16,10 +16,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.paquete.proyectoftg_appchat.databinding.FragmentDatosContactoBinding
-import com.paquete.proyectoftg_appchat.firebaseutil.FirebaseFirestoreHelper
 import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.AddContactFragment
+import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import com.paquete.proyectoftg_appchat.utils.Utils
@@ -29,7 +28,8 @@ class MostrarDatosContactoFragment : Fragment() {
     private var _binding: FragmentDatosContactoBinding? = null
     private val binding get() = _binding!!
     private lateinit var elementosViewModel: ElementosViewModel
-    private var firestoreHelper = FirebaseFirestoreHelper(FirebaseFirestore.getInstance())
+    private var userData: DataUser? = null
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentDatosContactoBinding.inflate(inflater, container, false)
@@ -39,6 +39,7 @@ class MostrarDatosContactoFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         elementosViewModel = ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
+
 
 
         binding.layoutSendMenssage.setOnClickListener {
@@ -51,17 +52,29 @@ class MostrarDatosContactoFragment : Fragment() {
                             val uidUsuario = nombreUsuarioSnapshot.documents.first().id
                             val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
                             val channelId = currentUserUid?.let { generateChannelId(it, uidUsuario) }
+                            elementosViewModel.obtenerDatosYElementoUsuarioActual(uidUsuario).observe(viewLifecycleOwner) { datauser ->
+                                datauser?.let {
+                                    userData = datauser
+                                    val nombreRemitente = contactos.nombre.toString()
+                                    val profileFragment = MessageFragment()
+                                    val bundle = Bundle().apply {
+                                        putParcelable("userData", userData)
+                                        putString("channelId", channelId)
+                                        putString("recipientId", uidUsuario)
+                                        putString("nombreRemitente", nombreRemitente)
+                                    }
+                                    profileFragment.arguments = bundle
+                                    Utils.navigateToFragment(requireActivity(), profileFragment)
+                                }
+                            }
 
-                            val nombreRemitente = contactos.nombre.toString()
-                            val messageFragment = MessageFragment.newInstance(channelId, uidUsuario, nombreRemitente)
-                            Utils.navigateToFragment(requireActivity(), messageFragment)
                         }
                     } else {
-                        Utils.showMessage(requireContext(),"Este contacto no está registrado en la aplicación")
+                        Utils.showMessage(requireContext(), "Este contacto no está registrado en la aplicación")
                     }
                 }.addOnFailureListener { exception ->
                     Log.e(TAG, "Error obteniendo datos: $exception")
-                    Utils.showMessage(requireContext(),"Error obteniendo datos")
+                    Utils.showMessage(requireContext(), "Error obteniendo datos")
                 }
         }
 
@@ -144,7 +157,6 @@ class MostrarDatosContactoFragment : Fragment() {
             }
         }
     }
-
 
 
     private fun generateChannelId(sender: String, receiver: String): String {

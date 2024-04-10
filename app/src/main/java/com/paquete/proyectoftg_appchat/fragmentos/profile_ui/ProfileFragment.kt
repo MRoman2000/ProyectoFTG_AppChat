@@ -29,6 +29,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import com.paquete.proyectoftg_appchat.databinding.FragmentProfileBinding
+import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import java.io.ByteArrayOutputStream
 
@@ -45,7 +46,9 @@ class ProfileFragment : Fragment() {
     private val storageRef = storage.reference
     var selectedImageUrl: Uri? = null
 
-    private lateinit var elementosViewModel: ElementosViewModel
+    private val elementosViewModel by lazy {
+        ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
@@ -55,21 +58,15 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        elementosViewModel = ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
+        val usuarioActual = FirebaseAuth.getInstance().currentUser?.uid
 
-        elementosViewModel.elementos.observe(viewLifecycleOwner) { elementos ->
-            // Filtrar los elementos para obtener solo los del usuario actual
-            val usuarioActual = FirebaseAuth.getInstance().currentUser
-            val uidUsuarioActual = usuarioActual?.uid
-            val elementosUsuarioActual = elementos.filter { it.uid == uidUsuarioActual }
-            elementosUsuarioActual.firstOrNull()?.let { primerElemento ->
-                Log.d("PRIMER_ELEMENTO_DEBUG", "Primer elemento del usuario actual: $primerElemento")
-                loadImageFromUrl(primerElemento.imageUrl.toString(), binding.imagenPerfil)
-                binding.editTextNombreCompleto.setText(primerElemento.nombreCompleto ?: "")
-                binding.editTextNombreUsuario.setText(primerElemento.nombreUsuario ?: "")
-                binding.editTextTelefono.setText(primerElemento.telefono ?: "")
-            //    binding.editTextTelefono.setText(primerElemento.email ?: "")
-            }
+        val userData = arguments?.getParcelable<DataUser>("userData")
+        userData?.let {
+            // Utiliza los datos del usuario aquí
+            loadImageFromUrl(it.imageUrl.toString(), binding.imagenPerfil)
+            binding.editTextNombreCompleto.setText(it.nombreCompleto ?: "")
+            binding.editTextNombreUsuario.setText(it.nombreUsuario ?: "")
+            binding.editTextTelefono.setText(it.telefono ?: "")
         }
 
 

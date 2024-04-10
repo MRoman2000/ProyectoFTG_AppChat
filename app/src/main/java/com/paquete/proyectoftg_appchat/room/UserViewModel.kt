@@ -4,17 +4,20 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.paquete.proyectoftg_appchat.model.Contactos
 import com.paquete.proyectoftg_appchat.model.DataUser
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ElementosViewModel(application: Application) : AndroidViewModel(application) {
     private val userRepository: UserRepository = UserRepository(application)
     val elementos: LiveData<List<DataUser>> = userRepository.getElementos()
 
-    private val _elementoUsuarioActual = MutableLiveData<DataUser?>()
-    val elementoUsuarioActual: LiveData<DataUser?> = _elementoUsuarioActual
+    val contactoSeleccionado1 = MutableLiveData<DataUser>()
+    val elementoUsuarioActual: LiveData<DataUser> = contactoSeleccionado1
 
     private val _usuarios = MutableLiveData<List<DataUser>>()
     val usuarios: LiveData<List<DataUser>> = _usuarios
@@ -23,6 +26,13 @@ class ElementosViewModel(application: Application) : AndroidViewModel(applicatio
     val contactoSeleccionado = MutableLiveData<Contactos>()
 
 
+    fun seleccionarContacto1(contacto: DataUser) {
+        contactoSeleccionado1.value = contacto
+    }
+
+    fun contactoSelecionado1(): LiveData<DataUser> {
+        return contactoSeleccionado1
+    }
 
     fun seleccionarContacto(contacto: Contactos) {
         contactoSeleccionado.value = contacto
@@ -31,27 +41,31 @@ class ElementosViewModel(application: Application) : AndroidViewModel(applicatio
     fun contactoSelecionado(): LiveData<Contactos> {
         return contactoSeleccionado
     }
+
+
     fun obtenerDatosUsuario(uidUsuario: String?): LiveData<DataUser?> {
-        val datosUsuario = MutableLiveData<DataUser?>()
-        viewModelScope.launch {
+        return liveData(viewModelScope.coroutineContext) {
             val usuario = uidUsuario?.let { userRepository.getDataUser(it) }
-            datosUsuario.postValue(usuario)
-        }
-        return datosUsuario
-    }
-    fun obtenerElementoUsuarioActual(uidUsuarioActual: String?) {
-        elementos.observeForever { elementos ->
-            val elementoUsuarioActual = elementos.firstOrNull { it.uid == uidUsuarioActual }
-            _elementoUsuarioActual.value = elementoUsuarioActual
+            emit(usuario)
         }
     }
+
+    fun obtenerDatosYElementoUsuarioActual(uidUsuarioActual: String?): LiveData<DataUser?> {
+        return liveData(viewModelScope.coroutineContext) {
+            val usuario = withContext(Dispatchers.IO) {
+                uidUsuarioActual?.let { userRepository.getDataUser(it) }
+            }
+            emit(usuario)
+        }
+    }
+
+
 
     fun insertar(elemento: DataUser) {
         viewModelScope.launch {
             userRepository.insertar(elemento)
         }
     }
-
 }
 
 

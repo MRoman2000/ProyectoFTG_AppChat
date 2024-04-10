@@ -66,10 +66,10 @@
                 android:id="@+id/textView_nombre_completo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="18dp"
                 android:gravity="center"
                 android:hint="Nombre Completo"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
 
@@ -142,7 +142,7 @@
                 android:id="@+id/layout_phone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
+                android:layout_marginTop="25dp"
                 android:background="@drawable/round_configuracion"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
@@ -169,43 +169,13 @@
 
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/layout_nombre_usuario"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:background="@drawable/round_configuracion"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="10dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Nombre usuario:"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/textView_nombre_usuario"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:hint="nombre_usuario"
-                    android:textSize="16sp" />
-
-
-            </LinearLayout>
 
 
             <LinearLayout
                 android:id="@+id/layout_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
+                android:layout_marginTop="20dp"
                 android:background="@drawable/round_configuracion"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
@@ -236,7 +206,7 @@
                 android:id="@+id/layout_edit_contact"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
+                android:layout_marginTop="25dp"
                 android:background="@drawable/round_configuracion"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
@@ -260,7 +230,7 @@
                 android:id="@+id/layout_delete_contact"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
+                android:layout_marginTop="25dp"
                 android:background="@drawable/round_configuracion"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"

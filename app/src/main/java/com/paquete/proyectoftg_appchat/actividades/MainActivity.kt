@@ -1,6 +1,6 @@
 package com.paquete.proyectoftg_appchat.actividades
 
-import android.content.ContentValues
+import android.content.ContentValues.TAG
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
@@ -18,6 +18,7 @@ import com.paquete.proyectoftg_appchat.fragmentos.ConfiguracionFragment
 import com.paquete.proyectoftg_appchat.fragmentos.ContactosFragment
 import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
+import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -102,13 +103,46 @@ class MainActivity : AppCompatActivity() {
                     val telefono = document.getString("telefono") ?: ""
                     val uid = document.getString("uid") ?: ""
                     val url_image = document.getString("imageUrl") ?: ""
-                    val elemento = DataUser(uid, email, fechaNacimiento, nombreCompleto, nombreUsuario, telefono, url_image)
+                    val elemento = DataUser(uid, email, fechaNacimiento, nombreCompleto, nombreUsuario, telefono, url_image,"")
                     elementosViewModel.insertar(elemento)
                 }
             }
         } else {
-            Log.e(ContentValues.TAG, "No hay usuario autenticado.")
+            Log.e(TAG, "No hay usuario autenticado.")
         }
+    }
+    override fun onResume() {
+        super.onResume()
+        updateUserStatusOnline()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        updateUserStatusOffline()
+    }
+
+    private fun updateUserStatusOnline() {
+        val userId = FirebaseUtils.getCurrentUserId()
+        val userRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(userId!!)
+        userRef.update("estado", "online")
+            .addOnSuccessListener {
+                Log.d(TAG, "Estado de usuario actualizado a online")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error al actualizar el estado del usuario a online", e)
+            }
+    }
+
+    private fun updateUserStatusOffline() {
+        val userId = FirebaseUtils.getCurrentUserId()
+        val userRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(userId!!)
+        userRef.update("estado", "offline")
+            .addOnSuccessListener {
+                Log.d(TAG, "Estado de usuario actualizado a offline")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error al actualizar el estado del usuario a offline", e)
+            }
     }
 }
 

@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -21,8 +22,11 @@ import com.google.firebase.firestore.SetOptions
 import com.paquete.proyectoftg_appchat.R
 import com.paquete.proyectoftg_appchat.adapters.MessageAdapter
 import com.paquete.proyectoftg_appchat.databinding.FragmentMessageBinding
+import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.ProfileFragment
+import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.model.Message
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
+import com.paquete.proyectoftg_appchat.utils.Utils
 
 class MessageFragment : Fragment() {
 
@@ -58,6 +62,12 @@ class MessageFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentMessageBinding.inflate(inflater, container, false)
         return binding.root
+
+        (requireActivity() as AppCompatActivity).setSupportActionBar(binding.toolbar)
+
+        // Habilitar el botón de retroceso en la barra de herramientas
+        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -68,17 +78,27 @@ class MessageFragment : Fragment() {
         messageList = ArrayList()
         messageAdapter = MessageAdapter(requireContext(), messageList)
 
+        val userData = arguments?.getParcelable<DataUser>("userData")
         val channelId = arguments?.getString("channelId")
         val recipientId = arguments?.getString("recipientId")
         val nombreRemitente = arguments?.getString("nombreRemitente")
         val imageUrl = arguments?.getString("imagenRemitente")
 
-        elementosViewModel.obtenerDatosUsuario(recipientId).observe(viewLifecycleOwner) { usuario ->
-            usuario?.let {
-                // Si los datos del usuario están disponibles, úsalos
-                binding.nameUser.text = usuario.nombreCompleto
-                Glide.with(requireContext()).load(usuario.imageUrl).apply(RequestOptions.circleCropTransform()).into(binding.imageProfile)
-            }
+
+
+        binding.imageProfile.setOnClickListener {
+            val profileFragment = ProfileFragment()
+            val bundle = Bundle()
+            bundle.putParcelable("userData", userData)
+            profileFragment.arguments = bundle
+            Utils.navigateToFragment(requireActivity(), profileFragment)
+        }
+
+        userData?.let {
+            binding.nameUser.text = userData.nombreCompleto
+            Glide.with(requireContext()).load(userData.imageUrl).apply(RequestOptions.circleCropTransform()).into(binding.imageProfile)
+            // Recupera y muestra el estado del usuario
+            fetchUserStatusRealTime(userData.uid)
         }
         recuperarMensajes(channelId.toString())
 
@@ -99,6 +119,28 @@ class MessageFragment : Fragment() {
 
     }
 
+
+
+    private fun fetchUserStatusRealTime(userId: String) {
+        db.collection("usuarios").document(userId).addSnapshotListener { snapshot, exception ->
+                if (exception != null) {
+                    Log.e(TAG, "Error al obtener el estado del usuario en tiempo real", exception)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    val estado = snapshot.getString("estado")
+                    // Actualiza la interfaz de usuario según el estado del usuario
+                    if (estado == "online") {
+                        binding.online.text = "Online"
+                    } else {
+                        binding.online.text = "Offline"
+                    }
+                } else {
+                    Log.d(TAG, "El documento del usuario $userId no existe")
+                }
+            }
+    }
 
     fun recuperarMensajes(channelId: String) {
 

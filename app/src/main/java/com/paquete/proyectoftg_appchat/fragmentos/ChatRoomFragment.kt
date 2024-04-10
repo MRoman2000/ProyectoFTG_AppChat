@@ -32,7 +32,9 @@ class ChatRoomFragment : Fragment() {
     private lateinit var chatRoomList: ArrayList<ChatRoom>
 
     private var _binding: FragmentChatRoomBinding? = null
-    private lateinit var elementosViewModel: ElementosViewModel
+    private val elementosViewModel by lazy {
+        ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
+    }
     private val binding get() = _binding!!
 
     companion object {
@@ -48,10 +50,8 @@ class ChatRoomFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         db = AppDatabase.getDatabase(requireContext())
         requestContactPermissions()
-        elementosViewModel = ViewModelProvider(requireActivity()).get(ElementosViewModel::class.java)
         chatRoomList = ArrayList()
-        channelAdapter = ChannelAdapter(requireContext(), chatRoomList, elementosViewModel)
-
+        channelAdapter = ChannelAdapter(chatRoomList, elementosViewModel)
         fetchChatrooms()
     }
 

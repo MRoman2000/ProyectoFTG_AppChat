@@ -37,6 +37,7 @@ class MessageAdapter(val context: Context, val messageList: ArrayList<Message>) 
         if (holder is SentViewHolder) {
             holder.sentMessage.text = currentMessage.message
             holder.time.text = sdf.format(currentMessage.timestamp!!.toDate())
+
         } else if (holder is ReceiveViewHolder) {
             holder.receiveMessage.text = currentMessage.message
             holder.time.text = sdf.format(currentMessage.timestamp!!.toDate())

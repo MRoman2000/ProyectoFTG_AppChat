@@ -2,6 +2,7 @@ package com.paquete.proyectoftg_appchat.utils
 
 import android.content.Context
 import android.net.Uri
+import android.os.Bundle
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -9,6 +10,7 @@ import androidx.fragment.app.FragmentActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.paquete.proyectoftg_appchat.R
+import com.paquete.proyectoftg_appchat.model.DataUser
 
 
 class Utils {
@@ -24,6 +26,18 @@ class Utils {
             }
         }
 
+
+            fun createBundle(userData: DataUser, channelId: String?, recipientId: String?, nombreRemitente: String?): Bundle {
+                return Bundle().apply {
+                    putParcelable("userData", userData)
+                    putString("channelId", channelId)
+                    putString("recipientId", recipientId)
+                    putString("nombreRemitente", nombreRemitente)
+                }
+            }
+
+
+
         fun setProfilePic(context: Context?, imageUri: Uri?, imageView: ImageView?) {
             Glide.with(context!!).load(imageUri).apply(RequestOptions.circleCropTransform()).into(imageView!!)
         }
@@ -32,6 +46,5 @@ class Utils {
             Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
         }
     }
-
-
 }
+
