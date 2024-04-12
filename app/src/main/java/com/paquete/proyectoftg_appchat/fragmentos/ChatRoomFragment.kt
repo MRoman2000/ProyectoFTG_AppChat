@@ -68,7 +68,13 @@ class ChatRoomFragment : Fragment() {
     }
 
     private fun requestContactPermissions() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+        val readPermission = Manifest.permission.READ_CONTACTS
+        val writePermission = Manifest.permission.WRITE_CONTACTS
+
+        val readPermissionGranted = ContextCompat.checkSelfPermission(requireContext(), readPermission) == PackageManager.PERMISSION_GRANTED
+        val writePermissionGranted = ContextCompat.checkSelfPermission(requireContext(), writePermission) == PackageManager.PERMISSION_GRANTED
+
+        if (readPermissionGranted && writePermissionGranted) {
             // Permission is not granted, request the permission
             requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), REQUEST_CONTACT_PERMISSIONS)
         } else {

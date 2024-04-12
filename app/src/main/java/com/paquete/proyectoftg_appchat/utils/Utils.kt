@@ -1,8 +1,9 @@
 package com.paquete.proyectoftg_appchat.utils
 
+import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
-import android.os.Bundle
+import android.util.Log
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -10,7 +11,6 @@ import androidx.fragment.app.FragmentActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.paquete.proyectoftg_appchat.R
-import com.paquete.proyectoftg_appchat.model.DataUser
 
 
 class Utils {
@@ -27,16 +27,28 @@ class Utils {
         }
 
 
-            fun createBundle(userData: DataUser, channelId: String?, recipientId: String?, nombreRemitente: String?): Bundle {
-                return Bundle().apply {
-                    putParcelable("userData", userData)
-                    putString("channelId", channelId)
-                    putString("recipientId", recipientId)
-                    putString("nombreRemitente", nombreRemitente)
-                }
+        fun updateUserStatusOnline() {
+            val userId = FirebaseUtils.getCurrentUserId()
+            val userRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(userId!!)
+            userRef.update("estado", "online").addOnSuccessListener {
+                Log.d(ContentValues.TAG, "Estado de usuario actualizado a online")
+            }.addOnFailureListener { e ->
+                Log.e(ContentValues.TAG, "Error al actualizar el estado del usuario a online", e)
             }
+        }
 
 
+        fun updateUserStatusOffline() {
+            val userId = FirebaseUtils.getCurrentUserId()
+            userId?.let { uid ->
+                val userRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(uid)
+                userRef.update("estado", "offline").addOnSuccessListener {
+                        Log.d("Estado", "Estado de usuario actualizado a offline")
+                    }.addOnFailureListener { e ->
+                        Log.e("Error", "Error al actualizar el estado del usuario a offline", e)
+                    }
+            }
+        }
 
         fun setProfilePic(context: Context?, imageUri: Uri?, imageView: ImageView?) {
             Glide.with(context!!).load(imageUri).apply(RequestOptions.circleCropTransform()).into(imageView!!)

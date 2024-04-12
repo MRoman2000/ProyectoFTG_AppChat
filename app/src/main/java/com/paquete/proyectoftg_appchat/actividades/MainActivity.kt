@@ -1,6 +1,7 @@
 package com.paquete.proyectoftg_appchat.actividades
 
 import android.content.ContentValues.TAG
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
@@ -18,7 +19,8 @@ import com.paquete.proyectoftg_appchat.fragmentos.ConfiguracionFragment
 import com.paquete.proyectoftg_appchat.fragmentos.ContactosFragment
 import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
-import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
+import com.paquete.proyectoftg_appchat.utils.UserStatusService
+import com.paquete.proyectoftg_appchat.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -62,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        
+
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.Chat -> {
@@ -79,6 +81,7 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
+        startService(Intent(this, UserStatusService::class.java))
 
     }
 
@@ -103,7 +106,7 @@ class MainActivity : AppCompatActivity() {
                     val telefono = document.getString("telefono") ?: ""
                     val uid = document.getString("uid") ?: ""
                     val url_image = document.getString("imageUrl") ?: ""
-                    val elemento = DataUser(uid, email, fechaNacimiento, nombreCompleto, nombreUsuario, telefono, url_image,"")
+                    val elemento = DataUser(uid, email, fechaNacimiento, nombreCompleto, nombreUsuario, telefono, url_image, "")
                     elementosViewModel.insertar(elemento)
                 }
             }
@@ -111,38 +114,24 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG, "No hay usuario autenticado.")
         }
     }
-    override fun onResume() {
-        super.onResume()
-        updateUserStatusOnline()
+
+
+    override fun onStart() {
+        super.onStart()
+        Utils.updateUserStatusOnline()
+        stopService(Intent(this, UserStatusService::class.java))
     }
 
-    override fun onPause() {
-        super.onPause()
-        updateUserStatusOffline()
+    override fun onStop() {
+        super.onStop()
+        Utils.updateUserStatusOffline()
+        stopService(Intent(this, UserStatusService::class.java))
     }
 
-    private fun updateUserStatusOnline() {
-        val userId = FirebaseUtils.getCurrentUserId()
-        val userRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(userId!!)
-        userRef.update("estado", "online")
-            .addOnSuccessListener {
-                Log.d(TAG, "Estado de usuario actualizado a online")
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Error al actualizar el estado del usuario a online", e)
-            }
-    }
 
-    private fun updateUserStatusOffline() {
-        val userId = FirebaseUtils.getCurrentUserId()
-        val userRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(userId!!)
-        userRef.update("estado", "offline")
-            .addOnSuccessListener {
-                Log.d(TAG, "Estado de usuario actualizado a offline")
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Error al actualizar el estado del usuario a offline", e)
-            }
+    override fun onDestroy() {
+        super.onDestroy()
+        stopService(Intent(this, UserStatusService::class.java))
     }
 }
 

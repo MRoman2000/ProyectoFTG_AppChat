@@ -184,19 +184,22 @@ class MostrarDatosContactoFragment : Fragment() {
     }
 
 
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             PERMISSION_REQUEST_WRITE_CONTACTS -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) { // El usuario concedió el permiso, procede con la eliminación del contacto
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permiso concedido, procede con la eliminación del contacto
                     deleteContact()
-                } else { // El usuario denegó el permiso, muestra un mensaje de error o toma alguna acción alternativa
+                } else {
+                    // Permiso denegado, muestra un mensaje de error o toma alguna acción alternativa
                     Toast.makeText(context, "Permiso denegado para escribir en contactos", Toast.LENGTH_SHORT).show()
                 }
-                return
             }
         }
     }
+
 
     companion object {
         private const val PERMISSION_REQUEST_WRITE_CONTACTS = 1001

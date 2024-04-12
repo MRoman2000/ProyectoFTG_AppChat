@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -25,6 +26,8 @@ import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import com.paquete.proyectoftg_appchat.utils.Utils
+import com.paquete.proyectoftg_appchat.utils.Utils.Companion.updateUserStatusOffline
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 
@@ -189,16 +192,20 @@ class ConfiguracionFragment : Fragment() {
             setTitle("Cerrar sesión")
             setMessage("¿Estás seguro de que quieres cerrar sesión?")
             setPositiveButton("Sí") { _, _ ->
-                FirebaseUtils.signOut()
-                val intent = Intent(context, SplashActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                lifecycleScope.launch {
+                    updateUserStatusOffline()
+                    FirebaseUtils.signOut()
+                    val intent = Intent(context, SplashActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    }
+                    val options = ActivityOptions.makeCustomAnimation(requireContext(), R.anim.slide_in_right, R.anim.slide_out_left)
+                    startActivity(intent, options.toBundle())
                 }
-                val options = ActivityOptions.makeCustomAnimation(requireContext(), R.anim.slide_in_right, R.anim.slide_out_left)
-                startActivity(intent, options.toBundle())
             }
             setNegativeButton("No") { _, _ -> }
         }.show()
     }
 }
+
 
 
