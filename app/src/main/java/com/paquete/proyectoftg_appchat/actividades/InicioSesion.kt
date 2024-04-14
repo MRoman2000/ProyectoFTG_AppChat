@@ -34,9 +34,7 @@ class InicioSesion : AppCompatActivity() {
             iniciarSesion()
         }
 
-        binding.editTextNombreUsuario.afterTextChanged {
-            validarCampos()
-        }
+
 
         binding.editTextTelefono.afterTextChanged {
             validarCampos()
@@ -44,7 +42,6 @@ class InicioSesion : AppCompatActivity() {
     }
 
     private fun iniciarSesion() {
-        val nombreUsuario = binding.editTextNombreUsuario.text.toString()
         if (validarCampos()) {
             val nombrePais = binding.countryCode.selectedCountryNameCode
             binding.countryCode.registerCarrierNumberEditText(binding.editTextTelefono)
@@ -52,7 +49,7 @@ class InicioSesion : AppCompatActivity() {
             val formattedPhoneNumber = binding.editTextTelefono.text.toString().trim()
             val numeroTelefonoFull = binding.countryCode.formattedFullNumber
 
-            FirebaseUtils.getFirestoreInstance().collection("usuarios").whereEqualTo("nombreUsuario", nombreUsuario)
+            FirebaseUtils.getFirestoreInstance().collection("usuarios")
                 .whereEqualTo("telefono", numeroTelefonoFull).get().addOnSuccessListener { querySnapshot ->
                     if (!querySnapshot.isEmpty) {
                         val intent = Intent(this@InicioSesion, NumeroVertificacion::class.java)
@@ -61,7 +58,6 @@ class InicioSesion : AppCompatActivity() {
                         intent.putExtra("isLogin", true)
                         startActivity(intent)
                     } else {
-                        binding.editTextNombreUsuario.error = "Usuario no coincide o no está registrado"
                         binding.editTextTelefono.error = "Teléfono no coincide o no está registrado"
                     }
                 }.addOnFailureListener { e ->
@@ -73,12 +69,10 @@ class InicioSesion : AppCompatActivity() {
     }
 
     private fun validarCampos(): Boolean {
-        val nombreUsuario = binding.editTextNombreUsuario.text.toString()
         val numeroTelefono = binding.editTextTelefono.text.toString()
 
-        val camposRellenos = nombreUsuario.isNotEmpty() && numeroTelefono.isNotEmpty()
+        val camposRellenos =  numeroTelefono.isNotEmpty()
 
-        binding.editTextNombreUsuario.error = if (nombreUsuario.isEmpty()) "Este campo es requerido" else null
         binding.editTextTelefono.error = if (numeroTelefono.isEmpty()) "Este campo es requerido" else null
         binding.botonIniciarSesion.isEnabled = camposRellenos
 

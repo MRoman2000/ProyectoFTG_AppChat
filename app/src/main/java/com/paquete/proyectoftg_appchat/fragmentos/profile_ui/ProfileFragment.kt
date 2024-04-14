@@ -1,24 +1,17 @@
 package com.paquete.proyectoftg_appchat.fragmentos.profile_ui
 
-import android.Manifest
-import android.app.Activity
 import android.content.ContentValues
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
@@ -28,10 +21,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import com.paquete.proyectoftg_appchat.data.AppDatabase
 import com.paquete.proyectoftg_appchat.databinding.FragmentProfileBinding
 import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
-import java.io.ByteArrayOutputStream
+import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class ProfileFragment : Fragment() {
@@ -40,12 +37,15 @@ class ProfileFragment : Fragment() {
     private val REQUEST_IMAGE_CAPTURE = 1
     private val REQUEST_PICK_IMAGE = 2
 
-    var imagenPickLauncher: ActivityResultLauncher<Intent>? = null
-
     private val storage = Firebase.storage
     private val storageRef = storage.reference
-    var selectedImageUrl: Uri? = null
 
+
+    val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { url ->
+        if (url != null) {
+            saveImageUrlToFirebase(url.toString())
+        }
+    }
     private val elementosViewModel by lazy {
         ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
     }
@@ -57,7 +57,10 @@ class ProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+            title = "Informacion de Perfil"
+            setDisplayHomeAsUpEnabled(true)
+        }
         val usuarioActual = FirebaseAuth.getInstance().currentUser?.uid
 
         val userData = arguments?.getParcelable<DataUser>("userData")
@@ -72,6 +75,7 @@ class ProfileFragment : Fragment() {
 
         binding.editFoto.setOnClickListener {
             showOptionsDialog()
+
         }
 
 
@@ -81,71 +85,42 @@ class ProfileFragment : Fragment() {
         val options = arrayOf<CharSequence>("Tomar foto", "Elegir de la galería", "Cancelar")
         MaterialAlertDialogBuilder(requireActivity()).setTitle("Elige una opción").setItems(options) { _, item ->
             when (options[item]) {
-                "Tomar foto" -> dispatchTakePictureIntent()
-                "Elegir de la galería" -> dispatchPickImageIntent()
+
+                "Elegir de la galería" -> pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                // Agrega otros casos aquí si es necesario
             }
         }.show()
     }
 
-    private fun checkCameraPermission() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            // Si no tienes permisos, los solicitas
-            requestCameraPermission()
-        } else {
-            // Si ya tienes permisos, puedes proceder con la acción que requiere permisos
-            dispatchTakePictureIntent()
-        }
-    }
 
+    private fun saveImageUrlToFirebase(imageUrl: String) {
+        val usuarioActual = FirebaseUtils.getCurrentUserId()
 
-    private fun dispatchTakePictureIntent() {
-        if (hasCameraPermission()) {
-            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            takePictureIntent.resolveActivity(requireActivity().packageManager)?.let {
-                takePicture.launch(takePictureIntent)
-            }
-        } else {
-            requestCameraPermission()
-        }
-    }
-
-    private fun hasCameraPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun requestCameraPermission() {
-        requestPermissions(arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
-    }
-
-    private val takePicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val data: Intent? = result.data
-            val imageBitmap = data?.extras?.get("data") as Bitmap
-            saveImageToFirebase(imageBitmap)
-        } else {
-            Toast.makeText(requireContext(), "La captura de imagen fue cancelada", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun dispatchPickImageIntent() {
-        val pickImageIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        pickImageIntent.type = "image/*"
-        startActivityForResult(pickImageIntent, REQUEST_PICK_IMAGE)
-    }
-
-    private fun saveImageToFirebase(bitmap: Bitmap) {
-        val baos = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
-        val data = baos.toByteArray()
-        val usuarioActual = FirebaseAuth.getInstance().currentUser?.uid
         val imagesRef = storageRef.child("profile_user/$usuarioActual")
-        val uploadTask = imagesRef.putBytes(data)
-        uploadTask.addOnSuccessListener { taskSnapshot ->
+
+        // Crear una referencia con la URL de la imagen
+        val url = Uri.parse(imageUrl)
+
+        // Subir la URL al Firebase Storage
+        imagesRef.putFile(url).addOnSuccessListener { taskSnapshot ->
+            // Obtener la URL de descarga de la imagen
             imagesRef.downloadUrl.addOnSuccessListener { uri ->
                 val downloadUrl = uri.toString()
                 loadImageFromUrl(downloadUrl, binding.imagenPerfil)
+
+                // Actualizar la URL de la imagen en Firestore
                 saveImageUrlToFirestore(downloadUrl)
-                Log.d("Foto", downloadUrl.toString())
+
+                // Actualizar la URL de la imagen en la base de datos Room
+                val usuarioActual = FirebaseAuth.getInstance().currentUser
+                usuarioActual?.uid?.let { userId ->
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val userDao = AppDatabase.getDatabase(requireContext()).datosDao()
+                        userDao.updateUserImageUrl(userId, downloadUrl)
+                    }
+                }
+
+                Log.d("Foto", downloadUrl)
                 Toast.makeText(requireContext(), "Imagen subida exitosamente", Toast.LENGTH_SHORT).show()
             }.addOnFailureListener { e ->
                 Toast.makeText(requireContext(), "Error al obtener la URL de descarga: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -154,6 +129,7 @@ class ProfileFragment : Fragment() {
             Toast.makeText(requireContext(), "Error al subir la imagen: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     private fun saveImageUrlToFirestore(imageUrl: String) {
         val usuarioActual = FirebaseAuth.getInstance().currentUser
@@ -172,23 +148,10 @@ class ProfileFragment : Fragment() {
         Glide.with(this).load(imageUrl).apply(RequestOptions.circleCropTransform()).into(imageView)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            when (requestCode) {
-                REQUEST_PICK_IMAGE -> {
-                    val imageUri = data?.data
-                    val imageStream = requireContext().contentResolver.openInputStream(imageUri!!)
-                    val imageBitmap = BitmapFactory.decodeStream(imageStream)
-                    saveImageToFirebase(imageBitmap)
-                }
-            }
-        }
-    }
 
     override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+        super.onDestroyView() // Limpiar el binding al destruir la vista
+        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
     }
 
     companion object {

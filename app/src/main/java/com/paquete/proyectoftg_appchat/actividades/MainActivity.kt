@@ -1,7 +1,9 @@
 package com.paquete.proyectoftg_appchat.actividades
 
+import android.Manifest
 import android.content.ContentValues.TAG
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
@@ -30,6 +32,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var elementosViewModel: ElementosViewModel
 
+    companion object {
+        private const val REQUEST_CONTACT_PERMISSIONS = 100
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,20 +42,30 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+
         val isDarkMode = isDarkModeEnabled()
         // Configura el color de la barra de navegación según el modo
         val navigationBarColor = if (isDarkMode) {
             ContextCompat.getColor(this, R.color.dark_primary_blue)
         } else {
-            ContextCompat.getColor(this, R.color.my_green_secondary_fixed_dim)
+            ContextCompat.getColor(this, R.color.my_primary_fixed)
         }
         window.navigationBarColor = navigationBarColor
 
-        elementosViewModel = ViewModelProvider(this).get(ElementosViewModel::class.java)
+
+        val statusBarColor = if (isDarkMode) {
+            ContextCompat.getColor(this, R.color.dark_primary_blue)
+        } else {
+            ContextCompat.getColor(this, R.color.my_primary_fixed)
+        }
+        window.statusBarColor = statusBarColor
+        setSupportActionBar(binding.materialToolbar)
+
+        elementosViewModel = ViewModelProvider(this)[ElementosViewModel::class.java]
         val chatFragment = ChatRoomFragment()
         val contactos = ContactosFragment()
         val configuracion = ConfiguracionFragment()
-
+        requestContactPermissions()
 
         lifecycleScope.launch {
             addNewItem()
@@ -83,6 +98,11 @@ class MainActivity : AppCompatActivity() {
         }
         startService(Intent(this, UserStatusService::class.java))
 
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressedDispatcher.onBackPressed()
+        return true
     }
 
 
@@ -133,6 +153,34 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         stopService(Intent(this, UserStatusService::class.java))
     }
+
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            REQUEST_CONTACT_PERMISSIONS -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                }
+            }
+        }
+    }
+
+    private fun requestContactPermissions() {
+        val readPermission = Manifest.permission.READ_CONTACTS
+        val writePermission = Manifest.permission.WRITE_CONTACTS
+
+        val readPermissionGranted =
+            ContextCompat.checkSelfPermission(applicationContext, readPermission) == PackageManager.PERMISSION_GRANTED
+        val writePermissionGranted =
+            ContextCompat.checkSelfPermission(applicationContext, writePermission) == PackageManager.PERMISSION_GRANTED
+
+        if (!readPermissionGranted || !writePermissionGranted) {
+            // Si alguno de los permisos no está otorgado, solicita los permisos
+            requestPermissions(arrayOf(readPermission, writePermission), REQUEST_CONTACT_PERMISSIONS)
+        }
+    }
+
 }
 
 

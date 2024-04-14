@@ -11,6 +11,7 @@ import androidx.fragment.app.FragmentActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.paquete.proyectoftg_appchat.R
+import java.util.Calendar
 
 
 class Utils {
@@ -38,13 +39,26 @@ class Utils {
         }
 
 
-        fun updateUserStatusOffline() {
+
+         fun updateUserStatusOffline() {
             val userId = FirebaseUtils.getCurrentUserId()
+            val currentTime = Calendar.getInstance().time
+
             userId?.let { uid ->
                 val userRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(uid)
-                userRef.update("estado", "offline").addOnSuccessListener {
+
+
+                val userData = hashMapOf(
+                    "estado" to "offline",
+                    "ultimaConexion" to currentTime
+                )
+
+
+                userRef.update(userData as Map<String, Any>)
+                    .addOnSuccessListener {
                         Log.d("Estado", "Estado de usuario actualizado a offline")
-                    }.addOnFailureListener { e ->
+                    }
+                    .addOnFailureListener { e ->
                         Log.e("Error", "Error al actualizar el estado del usuario a offline", e)
                     }
             }

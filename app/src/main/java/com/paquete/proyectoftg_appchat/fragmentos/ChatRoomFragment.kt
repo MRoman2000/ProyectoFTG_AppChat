@@ -1,14 +1,12 @@
 package com.paquete.proyectoftg_appchat.fragmentos
 
-import android.Manifest
 import android.content.ContentValues.TAG
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,12 +16,7 @@ import com.paquete.proyectoftg_appchat.adapters.ChannelAdapter
 import com.paquete.proyectoftg_appchat.data.AppDatabase
 import com.paquete.proyectoftg_appchat.databinding.FragmentChatRoomBinding
 import com.paquete.proyectoftg_appchat.model.ChatRoom
-import com.paquete.proyectoftg_appchat.model.Contactos
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 
 class ChatRoomFragment : Fragment() {
@@ -37,9 +30,7 @@ class ChatRoomFragment : Fragment() {
     }
     private val binding get() = _binding!!
 
-    companion object {
-        private const val REQUEST_CONTACT_PERMISSIONS = 100
-    }
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentChatRoomBinding.inflate(inflater, container, false)
@@ -48,47 +39,18 @@ class ChatRoomFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        (requireActivity() as AppCompatActivity).supportActionBar?.title = "Chats"
+
         db = AppDatabase.getDatabase(requireContext())
-        requestContactPermissions()
         chatRoomList = ArrayList()
         channelAdapter = ChannelAdapter(chatRoomList, elementosViewModel)
         fetchChatrooms()
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        when (requestCode) {
-            REQUEST_CONTACT_PERMISSIONS -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    obtenerContactos()
-                } else {
-                    // Permiso denegado, manejar caso en el que no se pueden obtener los contactos
-                }
-            }
-        }
-    }
 
-    private fun requestContactPermissions() {
-        val readPermission = Manifest.permission.READ_CONTACTS
-        val writePermission = Manifest.permission.WRITE_CONTACTS
 
-        val readPermissionGranted = ContextCompat.checkSelfPermission(requireContext(), readPermission) == PackageManager.PERMISSION_GRANTED
-        val writePermissionGranted = ContextCompat.checkSelfPermission(requireContext(), writePermission) == PackageManager.PERMISSION_GRANTED
 
-        if (readPermissionGranted && writePermissionGranted) {
-            // Permission is not granted, request the permission
-            requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), REQUEST_CONTACT_PERMISSIONS)
-        } else {
-            // Permission is already granted, proceed with obtaining contacts
-            obtenerContactos()
-        }
-    }
 
-    private fun obtenerContactos() {
-        // Aquí colocas la lógica para obtener los contactos
-        CoroutineScope(Dispatchers.Main).launch {
-            val contactos = withContext(Dispatchers.IO) { Contactos.obtenerContactos(requireContext()) }
-        }
-    }
 
     private fun fetchChatrooms() {
         if (!isAdded) {

@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -49,8 +50,7 @@ class ConfiguracionFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-
+        (requireActivity() as AppCompatActivity).supportActionBar?.title = "Configuracion"
         val usuarioActual = FirebaseUtils.getCurrentUserId()
 
         elementosViewModel.obtenerDatosYElementoUsuarioActual(usuarioActual).observe(viewLifecycleOwner) { datauser ->

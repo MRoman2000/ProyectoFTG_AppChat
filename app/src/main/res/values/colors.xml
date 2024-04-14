@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="primary_blue">#4b9851</color>
-    <color name="secondary_blue">#DAEDDA</color>
-
     <color name="dark_primary_blue">#1F2327</color>
     <color name="dark_secondary_blue">#4E595F</color>
 
@@ -21,18 +18,15 @@
     <color name="blue_dark">#000A12</color>
 
 
-    <color name="my_green_primary">#0D8F06</color>
-    <color name="my_green_primary_container">#206d1a</color>
-    <color name="my_green_primary_inverse">#2b7e24</color>
-    <color name="my_green_primary_fixed">#519b4a</color>
-    <color name="my_green_primary_fixed_dim">#85B97F</color>
-    <color name="my_green_secondary">#4b9851</color>
-    <color name="my_green_secondary_container">#FCFFFA</color>
-    <color name="my_green_secondary_fixed">#e5eee2</color>
-    <color name="my_green_secondary_fixed_dim">#CFE4CC</color>
-    <color name="my_green_tertiary">#7B1FA2</color>
-    <color name="my_green_tertiary_container">#BA68C8</color>
-    <color name="my_green_tertiary_fixed">#512DA8</color>
-    <color name="my_green_tertiary_fixed_dim">#7B1FA2</color>
+    <color name="my_primary">#039BE5</color>
+    <color name="my_primary_container">#01579B</color>
+
+    <color name="my_secondary">#D9F3FF</color>
+    <color name="my_secondary_container">#B3E5FC</color>
+
+    <color name="my_primary_fixed">#E1F5FE</color>
+    <color name="my_secondary_fixed">#B3E5FC</color>
+
+
     <color name="my_white">#FFFFFF</color>
 </resources>

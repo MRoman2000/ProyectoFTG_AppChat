@@ -27,6 +27,10 @@ import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.model.Message
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.Utils
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class MessageFragment : Fragment() {
 
@@ -36,15 +40,13 @@ class MessageFragment : Fragment() {
         ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
     }
     private val db = FirebaseFirestore.getInstance()
-    private val auth = FirebaseAuth.getInstance()
+
 
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var messageList: ArrayList<Message>
 
     private lateinit var mDbRef: FirebaseFirestore
     private lateinit var linearLayoutManager: LinearLayoutManager
-    var receiverRoom: String? = null
-    var senderRoom: String? = null
 
     companion object {
         fun newInstance(channelId: String?, recipientId: String, nombreRemitente: String): MessageFragment {
@@ -62,16 +64,12 @@ class MessageFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentMessageBinding.inflate(inflater, container, false)
         return binding.root
-
-        (requireActivity() as AppCompatActivity).setSupportActionBar(binding.toolbar)
-
-        // Habilitar el botón de retroceso en la barra de herramientas
-        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val activity = requireActivity() as AppCompatActivity
+        activity.supportActionBar?.hide()
 
         val senderUid = FirebaseAuth.getInstance().currentUser?.uid
         mDbRef = FirebaseFirestore.getInstance()
@@ -121,25 +119,56 @@ class MessageFragment : Fragment() {
 
 
 
+
     private fun fetchUserStatusRealTime(userId: String) {
         db.collection("usuarios").document(userId).addSnapshotListener { snapshot, exception ->
-                if (exception != null) {
-                    Log.e(TAG, "Error al obtener el estado del usuario en tiempo real", exception)
-                    return@addSnapshotListener
-                }
-
-                if (snapshot != null && snapshot.exists()) {
-                    val estado = snapshot.getString("estado")
-                    // Actualiza la interfaz de usuario según el estado del usuario
-                    if (estado == "online") {
-                        binding.online.text = "Online"
-                    } else {
-                        binding.online.text = "Offline"
-                    }
-                } else {
-                    Log.d(TAG, "El documento del usuario $userId no existe")
-                }
+            if (exception != null) {
+                Log.e(TAG, "Error al obtener el estado del usuario en tiempo real", exception)
+                return@addSnapshotListener
             }
+
+            if (snapshot != null && snapshot.exists()) {
+                val estado = snapshot.getString("estado")
+
+                // Obtener la hora de la última conexión
+                val lastConnection = snapshot.getTimestamp("ultimaConexion")
+
+                // Formatear la hora y el día de la última conexión (si está disponible)
+                val lastConnectionDate = lastConnection?.toDate()
+                val lastConnectionText = lastConnectionDate?.let { formatDate(it) } ?: "Desconocido"
+
+                // Actualizar la interfaz de usuario según el estado y la última conexión del usuario
+                if (estado == "online") {
+                    binding.online.text = "Online"
+                } else {
+                    binding.online.text = "Última vez: $lastConnectionText"
+                }
+            } else {
+                Log.d(TAG, "El documento del usuario $userId no existe")
+            }
+        }
+
+
+    }
+    private fun formatDate(date: Date): String {
+        val calendar = Calendar.getInstance()
+        val today = calendar.get(Calendar.DAY_OF_YEAR)
+        calendar.time = date
+        val connectionDay = calendar.get(Calendar.DAY_OF_YEAR)
+
+        return if (today == connectionDay) {
+            // Hoy
+            val formatter = SimpleDateFormat("HH:mm", Locale.getDefault())
+            "hoy a las ${formatter.format(date)}"
+        } else if (today - connectionDay == 1) {
+            // Ayer
+            val formatter = SimpleDateFormat("HH:mm", Locale.getDefault())
+            "ayer a las ${formatter.format(date)}"
+        } else {
+            // Otra fecha
+            val formatter = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
+            formatter.format(date)
+        }
     }
 
     fun recuperarMensajes(channelId: String) {
@@ -225,7 +254,8 @@ class MessageFragment : Fragment() {
         super.onPause()
         val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
         bottomNavigationView.visibility = View.VISIBLE
+        (requireActivity() as AppCompatActivity).supportActionBar?.show()
+        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
     }
-
 
 }

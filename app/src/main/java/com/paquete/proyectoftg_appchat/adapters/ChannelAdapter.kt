@@ -43,7 +43,6 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
 
     inner class ChannelViewHolder(private val binding: ViewholderChannelBinding) : RecyclerView.ViewHolder(binding.root) {
         private val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-        private val dataUser: DataUser? = null
 
         fun bind(chatRoom: ChatRoom) {
             val lastMessageText = if (chatRoom.lastMessageSenderId == FirebaseAuth.getInstance().currentUser?.uid) {
@@ -66,26 +65,31 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
             binding.textViewDate.text = sdf.format(chatRoom.lastMessageTimestamp!!.toDate())
 
             CoroutineScope(Dispatchers.Main).launch {
-                val contactos = withContext(Dispatchers.IO) { Contactos.obtenerContactos(binding.root.context) }
+                val contactos = withContext(Dispatchers.IO) {
+                    Contactos.obtenerContactos(binding.root.context)
+                }
+                // Verificar si el número está en la lista de contactos
                 val usuario = contactos?.find { it.numero == numero }
 
-                usuario?.let {
+                // Si el usuario está en la lista de contactos, mostrar su nombre, de lo contrario, mostrar el número de teléfono
+                val nombreRemitente = usuario?.nombre ?: otherUserModel?.telefono ?: numero
+
+                // Verificar si se obtuvieron datos del usuario de Firebase
+                if (otherUserModel != null) {
                     val channelId = chatRoom.chatroomId
                     val participants = chatRoom.userIds
                     val recipientId = participants?.firstOrNull { it != FirebaseAuth.getInstance().currentUser?.uid }
-                    val nombreRemitente = usuario.nombre ?: numero
 
-                    val elemento = DataUser(otherUserModel!!.uid,
-                        otherUserModel.email,
-                        "",
-                        nombreRemitente,
-                        otherUserModel.nombreUsuario,
-                        usuario.numero,
-                        otherUserModel.imageUrl,"")
+                    val elemento = DataUser(uid = otherUserModel.uid,
+                        email = otherUserModel.email,
+                        nombreCompleto = nombreRemitente,
+                        nombreUsuario = otherUserModel.nombreUsuario,
+                        telefono = otherUserModel.telefono,
+                        imageUrl = otherUserModel.imageUrl)
                     insertElemento(elemento)
 
-                    //     bindClickListener(channelId, recipientId, nombreRemitente)
                     observeUserData(otherUserModel.uid)
+
                     itemView.setOnClickListener {
                         val profileFragment = MessageFragment()
                         val bundle = Bundle().apply {
@@ -101,13 +105,9 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
             }
         }
 
+
         private fun insertElemento(elemento: DataUser) {
             elementosViewModel.insertar(elemento)
-        }
-
-        init {
-
-
         }
 
         private fun bindClickListener(channelId: String?, recipientId: String?, nombreRemitente: String?) {

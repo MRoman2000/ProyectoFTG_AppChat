@@ -12,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -38,6 +39,11 @@ class MostrarDatosContactoFragment : Fragment() {
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+            title = "Informacion de Contacto"
+            setDisplayHomeAsUpEnabled(true)
+        }
         elementosViewModel = ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
 
 
@@ -51,23 +57,29 @@ class MostrarDatosContactoFragment : Fragment() {
                         if (contactos != null) {
                             val uidUsuario = nombreUsuarioSnapshot.documents.first().id
                             val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
-                            val channelId = currentUserUid?.let { generateChannelId(it, uidUsuario) }
-                            elementosViewModel.obtenerDatosYElementoUsuarioActual(uidUsuario).observe(viewLifecycleOwner) { datauser ->
-                                datauser?.let {
-                                    userData = datauser
-                                    val nombreRemitente = contactos.nombre.toString()
-                                    val profileFragment = MessageFragment()
-                                    val bundle = Bundle().apply {
-                                        putParcelable("userData", userData)
-                                        putString("channelId", channelId)
-                                        putString("recipientId", uidUsuario)
-                                        putString("nombreRemitente", nombreRemitente)
+
+                            if (currentUserUid == uidUsuario) {
+                                // El usuario intenta enviarse un mensaje a sí mismo
+                                Utils.showMessage(requireContext(), "No puedes enviarte un mensaje a ti mismo")
+                            } else {
+                                // El usuario intenta enviar un mensaje a otro usuario
+                                val channelId = generateChannelId(currentUserUid!!, uidUsuario)
+                                elementosViewModel.obtenerDatosYElementoUsuarioActual(uidUsuario).observe(viewLifecycleOwner) { datauser ->
+                                    datauser?.let {
+                                        userData = datauser
+                                        val nombreRemitente = contactos.nombre.toString()
+                                        val profileFragment = MessageFragment()
+                                        val bundle = Bundle().apply {
+                                            putParcelable("userData", userData)
+                                            putString("channelId", channelId)
+                                            putString("recipientId", uidUsuario)
+                                            putString("nombreRemitente", nombreRemitente)
+                                        }
+                                        profileFragment.arguments = bundle
+                                        Utils.navigateToFragment(requireActivity(), profileFragment)
                                     }
-                                    profileFragment.arguments = bundle
-                                    Utils.navigateToFragment(requireActivity(), profileFragment)
                                 }
                             }
-
                         }
                     } else {
                         Utils.showMessage(requireContext(), "Este contacto no está registrado en la aplicación")
@@ -77,6 +89,7 @@ class MostrarDatosContactoFragment : Fragment() {
                     Utils.showMessage(requireContext(), "Error obteniendo datos")
                 }
         }
+
 
 
 
@@ -184,7 +197,6 @@ class MostrarDatosContactoFragment : Fragment() {
     }
 
 
-
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
@@ -208,7 +220,7 @@ class MostrarDatosContactoFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView() // Limpiar el binding al destruir la vista
-        _binding = null
+        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
     }
 
 }

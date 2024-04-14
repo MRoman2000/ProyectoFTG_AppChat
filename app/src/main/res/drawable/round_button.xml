@@ -2,7 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="oval">
-            <solid android:color="@color/my_green_primary_fixed_dim" />
+            <solid android:color="@color/my_primary" />
         </shape>
     </item>
     <item android:drawable="@drawable/ic_person" />

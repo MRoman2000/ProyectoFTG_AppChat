@@ -44,17 +44,18 @@ class ContactosFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val activity = requireActivity() as AppCompatActivity
-        activity.supportActionBar?.title = "Contactos"
+        (requireActivity() as AppCompatActivity).supportActionBar?.title = "Contactos"
 
         val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
 
         binding.searchView.getEditText().onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
             if (hasFocus) { // Ocultar el bottomNavigationView cuando la barra de búsqueda obtiene el foco
                 bottomNavigationView.visibility = View.GONE
+                (requireActivity() as AppCompatActivity).supportActionBar?.hide()
             } else { // Mostrar el bottomNavigationView cuando la barra de búsqueda pierde el foco
                 bottomNavigationView.visibility = View.VISIBLE
                 binding.searchView.text.clear()
+                (requireActivity() as AppCompatActivity).supportActionBar?.show()
             }
         }
 

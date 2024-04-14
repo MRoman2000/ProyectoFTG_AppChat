@@ -4,26 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
     android:orientation="vertical"
     tools:context=".fragmentos.ConfiguracionFragment">
 
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="10dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="Configuracion"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout>
 
 
     <androidx.core.widget.NestedScrollView
@@ -42,6 +25,7 @@
                 android:id="@+id/imagen_perfil"
                 android:layout_width="120dp"
                 android:layout_height="120dp"
+                android:layout_marginTop="15dp"
                 android:background="@drawable/round_button"
                 android:scaleType="centerCrop"
                 android:src="@drawable/ic_person" />
@@ -83,7 +67,7 @@
                     android:layout_centerVertical="true"
                     android:layout_marginEnd="15dp"
                     android:src="@drawable/ic_person"
-                    app:tint="@color/primary_blue" />
+                    app:tint="@color/blue" />
 
                 <TextView
                     android:id="@+id/texto_cuenta"

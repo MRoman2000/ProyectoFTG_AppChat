@@ -17,7 +17,7 @@ data class DataUser(
     val nombreUsuario: String? = null,
     val telefono: String? = null,
     val imageUrl: String? = null,
-    val estado: String = "offline" // Nuevo campo para el estado del usuario
+    val estado: String = "offline"
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString()!!,

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
@@ -33,7 +34,10 @@ class SecurityFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+            title = "Cuenta y Seguridad"
+            setDisplayHomeAsUpEnabled(true)
+        }
         binding.layoutDeleteAccount.setOnClickListener {
             val user = FirebaseAuth.getInstance().currentUser
 
@@ -66,5 +70,9 @@ class SecurityFragment : Fragment() {
                 setNegativeButton("No") { _, _ -> }
             }.show()
         }
+    }
+    override fun onDestroyView() {
+        super.onDestroyView() // Limpiar el binding al destruir la vista
+        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
     }
 }

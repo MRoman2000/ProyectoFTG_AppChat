@@ -13,6 +13,7 @@ import android.provider.ContactsContract.RawContacts
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.paquete.proyectoftg_appchat.databinding.FragmentAddContactBinding
@@ -32,7 +33,10 @@ class AddContactFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+            title = "Agregar Contacto"
+            setDisplayHomeAsUpEnabled(true)
+        }
         arguments?.getParcelable<Contactos>("editedContact")?.let { editedContact ->
             // Cargar la información del contacto en los campos correspondientes
             binding.textFieldTelefono.setText(editedContact.numero)
@@ -208,6 +212,10 @@ class AddContactFragment : Fragment() {
                 requireContext().contentResolver.insert(ContactsContract.Data.CONTENT_URI, emailValues)
             }
         }
+    }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
     }
 
 }

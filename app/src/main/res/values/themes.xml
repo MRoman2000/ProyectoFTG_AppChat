@@ -6,58 +6,55 @@
         <item name="android:windowBackground">@color/white</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="colorSurface">@color/black</item>
-        <item name="colorPrimary">@color/my_green_primary</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorPrimaryContainer">@color/my_green_primary_container</item>
-        
+
+        <item name="colorPrimary">@color/my_primary</item>
+        <item name="colorPrimaryContainer">@color/my_primary_container</item>
+
         <item name="colorOnPrimaryContainer">@color/black</item>
         <item name="colorOnSecondaryContainer">@color/black</item>
 
-        <item name="colorPrimaryInverse">@color/my_green_primary_inverse</item>
-        <item name="colorPrimaryFixed">@color/my_green_primary_fixed</item>
-        <item name="colorPrimaryFixedDim">@color/my_green_primary_fixed_dim</item>
+        <item name="colorPrimaryFixed">@color/my_primary_container</item>
 
         <item name="colorOnPrimaryFixedVariant">@color/black</item>
-        <item name="colorSecondary">@color/my_green_secondary</item>
+        <item name="colorSecondary">@color/my_secondary</item>
 
-        <item name="colorSecondaryContainer">@color/my_green_secondary_container</item>
-
-        <item name="colorSecondaryFixed">@color/my_green_secondary_fixed</item>
-        <item name="colorSecondaryFixedDim">@color/my_green_secondary_fixed_dim</item>
-        <item name="colorOnSecondaryFixed">@color/black</item>
-        <item name="colorOnSecondaryFixedVariant">@color/black</item>
-        <item name="colorTertiary">@color/my_green_tertiary</item>
-        <item name="colorOnTertiary">@color/black</item>
+        <item name="colorSecondaryFixed">@color/my_primary_fixed</item>
+        <item name="colorSecondaryFixedDim">@color/my_primary_fixed</item>
 
         <!-- busqueda -->
-        <item name="colorSurfaceContainerHigh">@color/my_green_secondary_fixed</item>
+        <item name="colorSurfaceContainerHigh">@color/my_secondary_container</item>
 
+        <item name="toolbarStyle">@style/ToolbarStyle</item>
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.App.MaterialAlertDialog</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigationView</item>
     </style>
 
     <style name="Widget.App.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
-        <item name="android:background">@color/my_green_secondary_fixed_dim</item>
+        <item name="materialThemeOverlay">@style/ThemeOverlay.App.BottomNavigationView</item>
+    </style>
+
+    <style name="ToolbarStyle" parent="Widget.MaterialComponents.Toolbar">
+        <item name="android:background">@color/my_primary_fixed</item>
     </style>
 
 
-    <style name="DialogFragmentTheme" parent="Theme.AppCompat.Light.Dialog">
-        <item name="android:windowMinWidthMajor">90%</item>
-        <item name="android:windowMinWidthMinor">90%</item>
+
+
+    <style name="ThemeOverlay.App.BottomNavigationView" parent="">
+        <item name="colorSecondaryContainer">@color/my_secondary_fixed</item>
+        <item name="colorSurfaceContainer">@color/my_primary_fixed</item>
+        <item name="colorOnSurfaceVariant">@color/black</item>
     </style>
+
 
     <style name="ThemeOverlay.App.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
-        <item name="colorPrimary">@color/primary_blue</item>
-        <item name="colorSecondary">@color/black</item>
-        <item name="colorSurface">@color/primary_blue</item>
-        <item name="android:background">@color/secondary_blue</item>
-        <item name="colorOnSurface">@color/primary_blue</item>
+        <item name="colorPrimary">@color/black</item>
+        <item name="colorSecondary">@color/rojo</item>
+        <item name="android:background">@color/my_primary_fixed</item>
+        <item name="colorOnSurface">@color/black</item>
         <item name="alertDialogStyle">@style/MaterialAlertDialog.App</item>
         <item name="materialAlertDialogTitleTextStyle">@style/MaterialAlertDialog.App.Title.Text</item>
-        <item name="buttonBarPositiveButtonStyle">@color/primary_blue</item>
-        <item name="buttonBarNegativeButtonStyle">@style/Widget.App.Button</item>
     </style>
 
 

@@ -1,7 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.ProyectoFTG_AppChat" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/my_green_primary</item>
+        <item name="colorPrimary">@color/my_primary</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:textColor">@color/white</item>
         <item name="android:windowBackground">#090909</item>
@@ -12,29 +12,30 @@
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorOnPrimaryContainer">@color/white</item>
         <item name="colorOnSecondaryContainer">@color/white</item>
-        <item name="colorSurface">@color/white</item>
-
-        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigationView</item>
-        <item name="materialAlertDialogTheme">@style/ThemeOverlay.App.MaterialAlertDialog</item>
         <item name="colorSurfaceContainerHigh">@color/dark_secondary_blue</item>
-        <item name="colorSecondaryContainer">@color/my_green_primary_fixed_dim</item>
+        <item name="colorSecondaryContainer">@color/my_primary_container</item>
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigationView</item>
+        <item name="toolbarStyle">@style/ToolbarStyle</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.App.MaterialAlertDialog</item>
+        <item name="colorPrimaryContainer">@color/my_primary_container</item>
     </style>
 
     <style name="Widget.App.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.App.BottomNavigationView</item>
+    </style>
+
+
+    <style name="ToolbarStyle" parent="Widget.MaterialComponents.Toolbar">
         <item name="android:background">@color/dark_primary_blue</item>
     </style>
 
-
     <style name="ThemeOverlay.App.BottomNavigationView" parent="">
-        <item name="colorSurface">@color/dark_primary_blue</item> <!-- Color de fondo -->
-        <item name="colorOnContainer">@color/dark_primary_blue</item>
-        <item name="colorPrimary">@color/dark_primary_blue</item>
+        <item name="colorSecondaryContainer">@color/dark_secondary_blue</item>
+        <item name="colorSurfaceContainer">@color/dark_primary_blue</item>
+        <item name="colorOnSurfaceVariant">@color/white</item>
     </style>
 
-    <style name="DialogFragmentTheme" parent="Theme.AppCompat.Light.Dialog">
-        <item name="android:windowMinWidthMajor">90%</item>
-        <item name="android:windowMinWidthMinor">90%</item>
-    </style>
+
 
     <style name="ThemeOverlay.App.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="colorPrimary">@color/dark_primary_blue</item>

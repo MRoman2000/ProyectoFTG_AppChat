@@ -6,37 +6,6 @@
     android:fitsSystemWindows="true"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/topLinearLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/boton_back"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/round_background"
-            android:clickable="true"
-            android:clipToOutline="true"
-            android:foreground="?android:attr/selectableItemBackground"
-            android:outlineProvider="background"
-            android:padding="5dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_arrow_back" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="25dp"
-            android:gravity="center"
-            android:text="Perfil"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -97,7 +66,6 @@
                         android:id="@+id/edit_text_nombre_completo"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/round_configuracion"
                         android:enabled="false"
                         android:hint="text" />
                 </LinearLayout>
@@ -125,7 +93,6 @@
                         android:id="@+id/edit_text_nombre_usuario"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/round_configuracion"
                         android:enabled="false"
                         android:hint="text" />
                 </LinearLayout>
