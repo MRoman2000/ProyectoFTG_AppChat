@@ -47,20 +47,16 @@ class ContactosFragment : Fragment() {
         (requireActivity() as AppCompatActivity).supportActionBar?.title = "Contactos"
 
         val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
-
+        (requireActivity() as AppCompatActivity).supportActionBar?.hide()
         binding.searchView.getEditText().onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
             if (hasFocus) { // Ocultar el bottomNavigationView cuando la barra de búsqueda obtiene el foco
                 bottomNavigationView.visibility = View.GONE
-                (requireActivity() as AppCompatActivity).supportActionBar?.hide()
+
             } else { // Mostrar el bottomNavigationView cuando la barra de búsqueda pierde el foco
                 bottomNavigationView.visibility = View.VISIBLE
                 binding.searchView.text.clear()
-                (requireActivity() as AppCompatActivity).supportActionBar?.show()
             }
         }
-
-
-
 
         ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN,
             ItemTouchHelper.RIGHT or ItemTouchHelper.LEFT) {
@@ -140,10 +136,17 @@ class ContactosFragment : Fragment() {
 
     private fun obtenerContactosDispositivo(): MutableList<Contactos> {
         val contactos = mutableListOf<Contactos>()
+        val numerosTelefonicos = mutableSetOf<String>() // Conjunto para almacenar números de teléfono únicos
         val contentResolver = requireActivity().contentResolver
 
         // Cursor para recuperar los números de teléfono
-        val phoneCursor = contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null)
+        val phoneCursor = contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            null,
+            null,
+            null,
+            null
+        )
 
         phoneCursor?.use { cursor ->
             val idIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
@@ -154,13 +157,23 @@ class ContactosFragment : Fragment() {
                 val id = cursor.getString(idIndex)
                 val name = cursor.getString(nameIndex)
                 val phoneNumber = cursor.getString(phoneNumberIndex)
-                val contact = Contactos(id, name, phoneNumber, "")
-                contactos.add(contact)
+
+                // Verificar si el número de teléfono ya ha sido agregado
+                if (numerosTelefonicos.add(phoneNumber)) {
+                    val contact = Contactos(id, name, phoneNumber, "")
+                    contactos.add(contact)
+                }
             }
         }
 
         // Cursor para recuperar las direcciones de correo electrónico
-        val emailCursor = contentResolver.query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null)
+        val emailCursor = contentResolver.query(
+            ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+            null,
+            null,
+            null,
+            null
+        )
         emailCursor?.use { cursor ->
             val idIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.CONTACT_ID)
             val emailIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS)
@@ -177,6 +190,7 @@ class ContactosFragment : Fragment() {
         return contactos
     }
 
+
     override fun onResume() {
         super.onResume()
         // Ocultar la barra de navegación al volver a este fragmento
@@ -187,6 +201,7 @@ class ContactosFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        (requireActivity() as AppCompatActivity).supportActionBar?.show()
     }
 
 }

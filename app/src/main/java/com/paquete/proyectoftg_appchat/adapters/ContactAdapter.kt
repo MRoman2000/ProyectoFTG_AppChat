@@ -39,16 +39,16 @@ class ContactAdapter(private val context: Context,
              } */
 
 
-     /*   holder.itemView.setOnClickListener {
-            contacto?.let {
-                elementosViewModel.seleccionarContacto(contacto)
-                val mostrar = MostrarPerfilFragment()
-                val transaction = (context as FragmentActivity).supportFragmentManager.beginTransaction()
-                transaction.replace(R.id.main_frame_layout, mostrar)
-                transaction.addToBackStack(null)
-                transaction.commit()
-            }
-        } */
+        /*   holder.itemView.setOnClickListener {
+               contacto?.let {
+                   elementosViewModel.seleccionarContacto(contacto)
+                   val mostrar = MostrarPerfilFragment()
+                   val transaction = (context as FragmentActivity).supportFragmentManager.beginTransaction()
+                   transaction.replace(R.id.main_frame_layout, mostrar)
+                   transaction.addToBackStack(null)
+                   transaction.commit()
+               }
+           } */
     }
 
     override fun getItemCount(): Int {

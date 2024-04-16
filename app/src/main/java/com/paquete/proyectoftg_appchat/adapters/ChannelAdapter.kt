@@ -24,8 +24,12 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
-    private val elementosViewModel: ElementosViewModel) : RecyclerView.Adapter<ChannelAdapter.ChannelViewHolder>() {
+class ChannelAdapter(
+    private val messageList: ArrayList<ChatRoom>,
+    private val elementosViewModel: ElementosViewModel
+) : RecyclerView.Adapter<ChannelAdapter.ChannelViewHolder>() {
+
+    private var userList: List<DataUser> = emptyList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val binding = ViewholderChannelBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -41,16 +45,36 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
         return messageList.size
     }
 
+    fun actualizarUsuarios(usuarios: List<DataUser>) {
+        userList = usuarios
+        notifyDataSetChanged() // Notifica al adaptador de que los datos han cambiado
+    }
+
     inner class ChannelViewHolder(private val binding: ViewholderChannelBinding) : RecyclerView.ViewHolder(binding.root) {
         private val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
 
         fun bind(chatRoom: ChatRoom) {
-            val lastMessageText = if (chatRoom.lastMessageSenderId == FirebaseAuth.getInstance().currentUser?.uid) {
+            val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+            val lastMessageText = if (chatRoom.lastMessageSenderId == currentUserUid) {
                 "Tú: ${chatRoom.lastMessage ?: ""}"
             } else {
                 chatRoom.lastMessage ?: ""
             }
             binding.textViewLastMessage.text = lastMessageText
+
+            val otherUserId = chatRoom.userIds?.find { it != currentUserUid }
+            otherUserId?.let { userId ->
+                val otherUser = userList.find { it.uid == userId }
+                otherUser?.let { user ->
+                    // Mostrar el nombre del usuario
+                    binding.textViewUser.text = user.nombreCompleto
+                    // Cargar la imagen del perfil del usuario utilizando Glide
+                    Glide.with(binding.root.context)
+                        .load(user.imageUrl)
+                        .apply(RequestOptions.circleCropTransform())
+                        .into(binding.imagenPerfil.imageView)
+                }
+            }
 
             FirebaseUtils.getOtrosUser(chatRoom.userIds)?.get()?.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -80,15 +104,15 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
                     val participants = chatRoom.userIds
                     val recipientId = participants?.firstOrNull { it != FirebaseAuth.getInstance().currentUser?.uid }
 
-                    val elemento = DataUser(uid = otherUserModel.uid,
+                    val elemento = DataUser(
+                        uid = otherUserModel.uid,
                         email = otherUserModel.email,
                         nombreCompleto = nombreRemitente,
                         nombreUsuario = otherUserModel.nombreUsuario,
                         telefono = otherUserModel.telefono,
-                        imageUrl = otherUserModel.imageUrl)
-                    insertElemento(elemento)
-
-                    observeUserData(otherUserModel.uid)
+                        imageUrl = otherUserModel.imageUrl
+                    )
+                    elementosViewModel.insertar(elemento)
 
                     itemView.setOnClickListener {
                         val profileFragment = MessageFragment()
@@ -104,49 +128,5 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
                 }
             }
         }
-
-
-        private fun insertElemento(elemento: DataUser) {
-            elementosViewModel.insertar(elemento)
-        }
-
-        private fun bindClickListener(channelId: String?, recipientId: String?, nombreRemitente: String?) {
-            itemView.setOnClickListener {
-                val messageFragment = MessageFragment.newInstance(channelId, recipientId.toString(), nombreRemitente.toString())
-                Utils.navigateToFragment(activity = binding.root.context as FragmentActivity, fragment = messageFragment)
-            }
-        }
-
-        private fun observeUserData(uid: String?) {
-            uid?.let {
-                elementosViewModel.obtenerDatosUsuario(uid).observe(itemView.context as FragmentActivity) { usuario ->
-                    usuario?.let {
-                        binding.textViewUser.text = it.nombreCompleto
-                        Glide.with(binding.root.context).load(it.imageUrl).apply(RequestOptions.circleCropTransform())
-                            .into(binding.imagenPerfil.imageView)
-                        return@observe
-                    }
-                }
-            }
-        }
-
-
-        /*   private fun loadUserName(numero: String, chatRoom: ChatRoom, itemView: View) {
-               CoroutineScope(Dispatchers.Main).launch {
-                   val contactos = withContext(Dispatchers.IO) { Contactos.obtenerContactos(context) }
-                   val usuario = contactos?.find { it.numero == numero }
-                   //     binding.textViewUser.text = usuario?.nombre ?: numero
-
-                   val channelId = chatRoom.chatroomId
-                   val participants = chatRoom.userIds
-                   val recipientId = participants?.firstOrNull { it != FirebaseAuth.getInstance().currentUser?.uid }
-                   val nombreRemitente = usuario?.nombre.toString()
-
-                   itemView.setOnClickListener {
-                       val messageFragment = MessageFragment.newInstance(channelId, recipientId.toString(), nombreRemitente)
-                       Utils.navigateToFragment(activity = context as FragmentActivity, fragment = messageFragment)
-                   }
-               }
-           } */
     }
 }

@@ -1,7 +1,6 @@
 package com.paquete.proyectoftg_appchat.adapters
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,12 +8,13 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.paquete.proyectoftg_appchat.R
+import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.model.Message
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class MessageAdapter(val context: Context, val messageList: ArrayList<Message>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-
+    private var userList: List<DataUser> = emptyList()
     val ITEM_RECEIVE = 1
     val ITEM_SENT = 2
 
@@ -60,22 +60,18 @@ class MessageAdapter(val context: Context, val messageList: ArrayList<Message>) 
         return messageList.size
     }
 
+
     class SentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val sentMessage = itemView.findViewById<TextView>(R.id.chat_right)
         val time = itemView.findViewById<TextView>(R.id.text_view_time)
 
-        init {
-            Log.d("MessageAdapter", "SentViewHolder: sentMessage = $sentMessage")
-        }
+
     }
 
     class ReceiveViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val receiveMessage = itemView.findViewById<TextView>(R.id.chat_left)
         val time = itemView.findViewById<TextView>(R.id.text_view_time)
 
-        init {
-            Log.d("MessageAdapter", "ReceiveViewHolder: receiveMessage = $receiveMessage")
-        }
-    }
 
+    }
 }

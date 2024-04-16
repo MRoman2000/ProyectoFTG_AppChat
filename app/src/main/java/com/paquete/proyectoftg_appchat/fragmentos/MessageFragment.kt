@@ -40,26 +40,11 @@ class MessageFragment : Fragment() {
         ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
     }
     private val db = FirebaseFirestore.getInstance()
-
-
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var messageList: ArrayList<Message>
-
     private lateinit var mDbRef: FirebaseFirestore
     private lateinit var linearLayoutManager: LinearLayoutManager
 
-    companion object {
-        fun newInstance(channelId: String?, recipientId: String, nombreRemitente: String): MessageFragment {
-            val fragment = MessageFragment()
-            val args = Bundle().apply {
-                putString("channelId", channelId)
-                putString("recipientId", recipientId)
-                putString("nombreRemitente", nombreRemitente)
-            }
-            fragment.arguments = args
-            return fragment
-        }
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentMessageBinding.inflate(inflater, container, false)
@@ -79,11 +64,10 @@ class MessageFragment : Fragment() {
         val userData = arguments?.getParcelable<DataUser>("userData")
         val channelId = arguments?.getString("channelId")
         val recipientId = arguments?.getString("recipientId")
-        val nombreRemitente = arguments?.getString("nombreRemitente")
-        val imageUrl = arguments?.getString("imagenRemitente")
 
 
-
+        // Llama al método para cargar la lista de usuarios
+        elementosViewModel.cargarUsuarios()
         binding.imageProfile.setOnClickListener {
             val profileFragment = ProfileFragment()
             val bundle = Bundle()
@@ -106,19 +90,9 @@ class MessageFragment : Fragment() {
         val sendButton = binding.btnSendMessage
 
         sendButton.setOnClickListener {
-
             sendMessage(senderUid.toString(), recipientId.toString())
-
         }
-
-
-        //      binding.nameUser.text = nombreRemitente
-        //     Glide.with(requireContext()).load(imageUrl).apply(RequestOptions.circleCropTransform()).into(binding.imageProfile)
-
     }
-
-
-
 
     private fun fetchUserStatusRealTime(userId: String) {
         db.collection("usuarios").document(userId).addSnapshotListener { snapshot, exception ->
@@ -150,6 +124,7 @@ class MessageFragment : Fragment() {
 
 
     }
+
     private fun formatDate(date: Date): String {
         val calendar = Calendar.getInstance()
         val today = calendar.get(Calendar.DAY_OF_YEAR)

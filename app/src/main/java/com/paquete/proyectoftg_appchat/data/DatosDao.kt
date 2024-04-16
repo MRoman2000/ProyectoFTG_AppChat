@@ -16,11 +16,15 @@ interface DatosDao {
     fun insertar(datos: DataUser)
 
     @Query("SELECT * FROM DataUser")
-    fun getElementos(): LiveData<List<DataUser>>
+    fun getElementos(): List<DataUser>
+
 
     @Query("UPDATE DataUser SET imageUrl = :imageUrl WHERE uid = :uid")
     suspend fun updateUserImageUrl(uid: String, imageUrl: String)
 
     @Query("SELECT * FROM DataUser WHERE uid = :uid")
     suspend fun getDataUser(uid: String): DataUser?
+
+    @Query("SELECT * FROM DataUser WHERE uid = :uid")
+    fun getDataUser1LiveData(uid: String): LiveData<DataUser?>
 }
