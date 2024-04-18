@@ -68,11 +68,26 @@ class Registro : AppCompatActivity() {
         val nombreCompleto = binding.editTextNombreCompleto.text.toString()
         val email = binding.editTextEmail.text.toString()
         val numeroTelefono = intent.getStringExtra("numeroTelefono")
-        val fechaNacimento = binding.editTextFechaNacimiento.text.toString()
+        val fechaNacimiento = binding.editTextFechaNacimiento.text.toString()
         val currentUser = firebaseAuthHelper.getCurrentUserId()
 
-        crearUsuario(nombreUsuario, nombreCompleto, email, numeroTelefono.toString(), fechaNacimento, currentUser.toString())
+        // Verificar la fecha de nacimiento
+        val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+        val fechaNacimientoDate = formatter.parse(fechaNacimiento)
+        val calendarNacimiento = Calendar.getInstance().apply { time = fechaNacimientoDate }
+        val calendarHoy = Calendar.getInstance()
+        calendarNacimiento.add(Calendar.YEAR, 12) // Agregar 12 años a la fecha de nacimiento
+
+        if (calendarNacimiento.before(calendarHoy)) {
+            // El usuario tiene al menos 12 años, permitir el registro
+            crearUsuario(nombreUsuario, nombreCompleto, email, numeroTelefono.toString(), fechaNacimiento, currentUser.toString())
+        } else {
+            // El usuario no tiene la edad mínima requerida
+            Toast.makeText(this, "Debes tener al menos 12 años para registrarte.", Toast.LENGTH_SHORT).show()
+        }
     }
+
+
 
     private fun crearUsuario(nombreUsuario: String,
         nombreCompleto: String,
@@ -96,7 +111,6 @@ class Registro : AppCompatActivity() {
                                         "nombreUsuario" to nombreUsuario,
                                         "email" to email,
                                         "telefono" to numeroTelefono,
-                                        "fechaNacimiento" to fechaNacimiento,
                                         "uid" to currentUser,
                                         "imageUrl" to "")
 

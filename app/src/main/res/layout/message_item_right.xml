@@ -9,14 +9,6 @@
         android:layout_alignParentEnd="true"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/text_view_time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="3dp"
-            android:hint="hora"
-            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/chat_right"
@@ -27,12 +19,19 @@
             android:background="@drawable/round_configuracion"
             android:backgroundTint="@color/blue"
             android:padding="9dp"
-
             android:text="Prueba"
             android:textColor="@color/white"
             android:textSize="16sp" />
 
-
+        <TextView
+            android:id="@+id/text_view_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginEnd="3dp"
+            android:layout_marginTop="2dp"
+            android:hint="11:50"
+            android:textSize="12sp" />
 
 
     </LinearLayout>

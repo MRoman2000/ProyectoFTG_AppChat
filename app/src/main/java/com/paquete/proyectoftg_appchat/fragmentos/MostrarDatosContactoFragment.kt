@@ -1,7 +1,6 @@
 package com.paquete.proyectoftg_appchat.fragmentos
 
 import android.content.ContentResolver
-import android.content.ContentValues.TAG
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -85,14 +84,10 @@ class MostrarDatosContactoFragment : Fragment() {
                         Utils.showMessage(requireContext(), "Este contacto no está registrado en la aplicación")
                     }
                 }.addOnFailureListener { exception ->
-                    Log.e(TAG, "Error obteniendo datos: $exception")
+                    Log.e("Error", "Error obteniendo datos: $exception")
                     Utils.showMessage(requireContext(), "Error obteniendo datos")
                 }
         }
-
-
-
-
         binding.layoutDeleteContact.setOnClickListener {
 
 
@@ -133,8 +128,6 @@ class MostrarDatosContactoFragment : Fragment() {
 
                 }
             } */
-
-
 
         elementosViewModel.contactoSelecionado().observe(viewLifecycleOwner) { contactos ->
             // Verificar si el contacto no es nulo
@@ -220,7 +213,7 @@ class MostrarDatosContactoFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView() // Limpiar el binding al destruir la vista
-        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
+
     }
 
 }

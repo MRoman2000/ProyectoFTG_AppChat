@@ -36,29 +36,33 @@ class ChatRoomFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         (requireActivity() as AppCompatActivity).supportActionBar?.title = "Chats"
         chatRoomList = ArrayList()
+        setupRecyclerView()
+        observeUsuarios()
+        fetchChatrooms()
+    }
 
-        // Observa el LiveData de usuarios en el ViewModel
+    private fun setupRecyclerView() {
+        channelAdapter = ChannelAdapter(chatRoomList, elementosViewModel)
+        binding.recyclerViewChat.apply {
+            adapter = channelAdapter
+            layoutManager = LinearLayoutManager(requireContext())
+        }
+    }
+
+    private fun observeUsuarios() {
+        elementosViewModel.cargarUsuarios()
         elementosViewModel.usuarios.observe(viewLifecycleOwner) { usuarios ->
-            // Actualiza la lista de usuarios en el adaptador de canales
             channelAdapter.actualizarUsuarios(usuarios)
         }
 
-        // Llama al método para cargar la lista de usuarios
-        elementosViewModel.cargarUsuarios()
 
-        // Configura el adaptador de canales
-        channelAdapter = ChannelAdapter(chatRoomList, elementosViewModel)
-        binding.recyclerViewChat.adapter = channelAdapter
-        binding.recyclerViewChat.layoutManager = LinearLayoutManager(requireContext())
-
-        // Fetch chatrooms y realiza otras operaciones necesarias
-        fetchChatrooms()
     }
+
     private fun fetchChatrooms() {
-        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         val chatroomsCollectionRef = FirebaseFirestore.getInstance().collection("chats")
-        chatroomsCollectionRef.whereArrayContains("userIds", currentUserUid!!).addSnapshotListener { snapshot, exception ->
+        chatroomsCollectionRef.whereArrayContains("userIds", currentUserUid).addSnapshotListener { snapshot, exception ->
             if (exception != null) {
                 Log.e(TAG, "Error fetching chatrooms: $exception")
                 return@addSnapshotListener
@@ -69,13 +73,15 @@ class ChatRoomFragment : Fragment() {
             }
 
             chatrooms?.let {
-                if (it != chatRoomList) {
-                    chatRoomList.clear()
-                    chatRoomList.addAll(it)
-                    channelAdapter.notifyDataSetChanged()
-                }
+                chatRoomList.clear()
+                chatRoomList.addAll(it)
+                channelAdapter.notifyDataSetChanged()
             }
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

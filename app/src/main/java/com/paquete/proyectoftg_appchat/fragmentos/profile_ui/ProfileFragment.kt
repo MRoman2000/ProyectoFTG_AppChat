@@ -18,7 +18,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -28,12 +27,14 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import com.paquete.proyectoftg_appchat.data.AppDatabase
 import com.paquete.proyectoftg_appchat.databinding.FragmentProfileBinding
+import com.paquete.proyectoftg_appchat.model.Contactos
 import com.paquete.proyectoftg_appchat.model.DataUser
-import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
+import com.paquete.proyectoftg_appchat.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 
@@ -62,9 +63,7 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    private val elementosViewModel by lazy {
-        ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
-    }
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
@@ -93,7 +92,34 @@ class ProfileFragment : Fragment() {
             showOptionsDialog()
 
         }
+
+        addContacto(userData)
     }
+
+
+    private fun addContacto(userData: DataUser?) {
+        val numero = userData?.telefono
+        CoroutineScope(Dispatchers.Main).launch {
+            val contactos = withContext(Dispatchers.IO) {
+                Contactos.obtenerContactos(requireContext())
+            }
+            val usuario = contactos?.find { it.numero == numero }
+            binding.buttonAddContact.visibility = View.VISIBLE
+            if (usuario == null) {
+                binding.buttonAddContact.setOnClickListener {
+                    val addContactFragment = AddContactFragment()
+                    val bundle = Bundle().apply {
+                        putString("numero", numero)
+                    }
+                    addContactFragment.arguments = bundle
+                    Utils.navigateToFragment(requireActivity(), addContactFragment)
+                }
+            } else {
+                binding.buttonAddContact.visibility = View.GONE
+            }
+        }
+    }
+
 
     private fun showOptionsDialog() {
         val options = arrayOf<CharSequence>("Tomar foto", "Elegir de la galería", "Cancelar")

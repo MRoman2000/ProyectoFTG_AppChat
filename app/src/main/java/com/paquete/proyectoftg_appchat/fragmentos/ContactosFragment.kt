@@ -44,8 +44,9 @@ class ContactosFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (requireActivity() as AppCompatActivity).supportActionBar?.title = "Contactos"
-
+        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(false)
+        }
         val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
         (requireActivity() as AppCompatActivity).supportActionBar?.hide()
         binding.searchView.getEditText().onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->

@@ -2,6 +2,7 @@ package com.paquete.proyectoftg_appchat.adapters
 
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.fragment.app.FragmentActivity
@@ -24,10 +25,8 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class ChannelAdapter(
-    private val messageList: ArrayList<ChatRoom>,
-    private val elementosViewModel: ElementosViewModel
-) : RecyclerView.Adapter<ChannelAdapter.ChannelViewHolder>() {
+class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
+    private val elementosViewModel: ElementosViewModel) : RecyclerView.Adapter<ChannelAdapter.ChannelViewHolder>() {
 
     private var userList: List<DataUser> = emptyList()
 
@@ -45,16 +44,19 @@ class ChannelAdapter(
         return messageList.size
     }
 
+
     fun actualizarUsuarios(usuarios: List<DataUser>) {
         userList = usuarios
         notifyDataSetChanged() // Notifica al adaptador de que los datos han cambiado
+        Log.d("UserList", "Tamaño de userList: ${userList.size}") // Agrega un registro para verificar el tamaño de userList
     }
+
 
     inner class ChannelViewHolder(private val binding: ViewholderChannelBinding) : RecyclerView.ViewHolder(binding.root) {
         private val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
         fun bind(chatRoom: ChatRoom) {
-            val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+
             val lastMessageText = if (chatRoom.lastMessageSenderId == currentUserUid) {
                 "Tú: ${chatRoom.lastMessage ?: ""}"
             } else {
@@ -62,29 +64,24 @@ class ChannelAdapter(
             }
             binding.textViewLastMessage.text = lastMessageText
 
-            val otherUserId = chatRoom.userIds?.find { it != currentUserUid }
-            otherUserId?.let { userId ->
-                val otherUser = userList.find { it.uid == userId }
-                otherUser?.let { user ->
-                    // Mostrar el nombre del usuario
-                    binding.textViewUser.text = user.nombreCompleto
-                    // Cargar la imagen del perfil del usuario utilizando Glide
-                    Glide.with(binding.root.context)
-                        .load(user.imageUrl)
-                        .apply(RequestOptions.circleCropTransform())
-                        .into(binding.imagenPerfil.imageView)
-                }
-            }
 
             FirebaseUtils.getOtrosUser(chatRoom.userIds)?.get()?.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val otherUserModel = task.result.toObject(DataUser::class.java)
+                    // Procesamos los datos del usuario
+
                     processOtherUser(chatRoom, otherUserModel)
+
                 }
             }
+            mostrarDatos(chatRoom)
+
+            // Obtenemos el ID del otro usuario
+
         }
 
         private fun processOtherUser(chatRoom: ChatRoom, otherUserModel: DataUser?) {
+
             val numero = otherUserModel?.telefono
             binding.textViewDate.text = sdf.format(chatRoom.lastMessageTimestamp!!.toDate())
 
@@ -103,16 +100,18 @@ class ChannelAdapter(
                     val channelId = chatRoom.chatroomId
                     val participants = chatRoom.userIds
                     val recipientId = participants?.firstOrNull { it != FirebaseAuth.getInstance().currentUser?.uid }
-
-                    val elemento = DataUser(
-                        uid = otherUserModel.uid,
+                    val elemento = DataUser(uid = otherUserModel.uid,
                         email = otherUserModel.email,
                         nombreCompleto = nombreRemitente,
                         nombreUsuario = otherUserModel.nombreUsuario,
                         telefono = otherUserModel.telefono,
-                        imageUrl = otherUserModel.imageUrl
-                    )
+                        imageUrl = otherUserModel.imageUrl)
                     elementosViewModel.insertar(elemento)
+
+                    binding.textViewUser.text = nombreRemitente
+                    Glide.with(binding.root.context).load(otherUserModel.imageUrl).apply(RequestOptions.circleCropTransform())
+                        .into(binding.imagenPerfil.imageView)
+
 
                     itemView.setOnClickListener {
                         val profileFragment = MessageFragment()
@@ -128,5 +127,26 @@ class ChannelAdapter(
                 }
             }
         }
+
+        fun mostrarDatos(chatRoom: ChatRoom) {
+
+            val otherUserId = chatRoom.userIds?.find { it != currentUserUid }
+            Log.d("ChannelAdapter", "otherUserId: $otherUserId")
+            otherUserId?.let { userId ->
+                // Intentamos encontrar al otro usuario en la lista local
+                val otherUser = userList.find { it.uid == userId }
+                Log.d("ChannelAdapter", "otherUser: $otherUser")
+                otherUser?.let { user ->
+                    // Mostramos los datos del usuario en la interfaz de usuario
+                    binding.textViewUser.text = user.nombreCompleto
+                    Glide.with(binding.root.context).load(user.imageUrl).apply(RequestOptions.circleCropTransform())
+                        .into(binding.imagenPerfil.imageView)
+                }
+            }
+
+        }
+
     }
+
+
 }

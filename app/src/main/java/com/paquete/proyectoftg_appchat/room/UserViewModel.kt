@@ -1,6 +1,7 @@
 package com.paquete.proyectoftg_appchat.room
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -19,6 +20,11 @@ class ElementosViewModel(application: Application) : AndroidViewModel(applicatio
     private val _usuarios = MutableLiveData<List<DataUser>>()
     val usuarios: LiveData<List<DataUser>> = _usuarios
 
+    private val _contactos = MutableLiveData<List<Contactos>>()
+    val contactos: LiveData<List<Contactos>> = _contactos
+
+
+
 
     val contactoSeleccionado = MutableLiveData<Contactos>()
 
@@ -26,6 +32,9 @@ class ElementosViewModel(application: Application) : AndroidViewModel(applicatio
         contactoSeleccionado.value = contacto
     }
 
+    fun contactoSelecionado(): LiveData<Contactos> {
+        return contactoSeleccionado
+    }
 
     fun cargarUsuarios() {
         viewModelScope.launch {
@@ -33,13 +42,12 @@ class ElementosViewModel(application: Application) : AndroidViewModel(applicatio
                 userRepository.getElementos()
             }
             _usuarios.value = usuarios
+            Log.d("ElementosViewModel", "Usuarios cargados: ${usuarios.size}")
         }
     }
 
 
-    fun contactoSelecionado(): LiveData<Contactos> {
-        return contactoSeleccionado
-    }
+
 
     fun obtenerDatosUsuario(uidUsuario: String?): LiveData<DataUser?> {
         return liveData(viewModelScope.coroutineContext) {
@@ -62,6 +70,7 @@ class ElementosViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             userRepository.insertar(elemento)
         }
+
     }
 }
 

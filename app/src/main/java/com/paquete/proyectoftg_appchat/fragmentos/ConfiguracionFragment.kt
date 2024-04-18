@@ -53,9 +53,17 @@ class ConfiguracionFragment : Fragment() {
         (requireActivity() as AppCompatActivity).supportActionBar?.title = "Configuracion"
         val usuarioActual = FirebaseUtils.getCurrentUserId()
 
+
+        // Utilizar los datos del usuario actual si ya están disponibles
+        userData?.let {
+            loadImageFromUrl(it.imageUrl.toString(), binding.imagenPerfil)
+            binding.textNombreCompleto.text = it.nombreCompleto ?: ""
+            binding.textNombreUsuario.text = it.nombreUsuario ?: ""
+        }
+
         elementosViewModel.obtenerDatosYElementoUsuarioActual(usuarioActual).observe(viewLifecycleOwner) { datauser ->
             datauser?.let {
-                userData = datauser
+                userData = it
                 loadImageFromUrl(it.imageUrl.toString(), binding.imagenPerfil)
                 binding.textNombreCompleto.text = it.nombreCompleto ?: ""
                 binding.textNombreUsuario.text = it.nombreUsuario ?: ""
@@ -151,6 +159,30 @@ class ConfiguracionFragment : Fragment() {
             cerrarSesion()
         }
     }
+
+    // Función para cargar los datos del usuario en la interfaz de usuario
+    fun cargarDatosUsuario(userData: DataUser?) {
+        userData?.let { user ->
+            loadImageFromUrl(user.imageUrl.toString(), binding.imagenPerfil)
+            binding.textNombreCompleto.text = user.nombreCompleto ?: ""
+            binding.textNombreUsuario.text = user.nombreUsuario ?: ""
+        }
+    }
+
+// Llamamos a la función para cargar los datos del usuario cuando se tenga la información disponible
+
+    fun mostrarDatos(userList: List<DataUser>) {
+        val userId = FirebaseUtils.getCurrentUserId() // Obtener el ID del usuario actual
+        val currentUser = userList.find { it.uid == userId } // Encontrar el usuario actual en la lista de usuarios
+
+        currentUser?.let { user ->
+            // Mostrar los datos del usuario en la interfaz de usuario
+            loadImageFromUrl(user.imageUrl.toString(), binding.imagenPerfil)
+            binding.textNombreCompleto.text = user.nombreCompleto ?: ""
+            binding.textNombreUsuario.text = user.nombreUsuario ?: ""
+        }
+    }
+
 
     fun setLocale(languageCode: String) {
         val locale = Locale(languageCode)

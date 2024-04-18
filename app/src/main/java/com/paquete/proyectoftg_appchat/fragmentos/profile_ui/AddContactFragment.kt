@@ -24,7 +24,7 @@ import java.util.UUID
 class AddContactFragment : Fragment() {
     private var _binding: FragmentAddContactBinding? = null
     private val binding get() = _binding!!
-
+    private var phoneNumber: String? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentAddContactBinding.inflate(inflater, container, false)
@@ -44,6 +44,14 @@ class AddContactFragment : Fragment() {
             binding.textFieldEmail.setText(editedContact.email)
         }
 
+        arguments?.let {
+            phoneNumber = it.getString("numero")
+        }
+
+
+        phoneNumber?.takeIf { it.isNotEmpty() }?.let { phoneNumber ->
+            binding.textFieldTelefono.setText(phoneNumber)
+        }
 
         binding.btnSaveContact.setOnClickListener {
             val numero = binding.textFieldTelefono.text.toString()
@@ -51,6 +59,7 @@ class AddContactFragment : Fragment() {
             val email = binding.textFieldEmail.text.toString()
 
             if (numero.isNotEmpty()) {
+
                 // Obtener el contacto editado de los argumentos del fragmento
                 val editedContact = arguments?.getParcelable<Contactos>("editedContact")
                 addOrUpdateContact(numero, nombre, email, editedContact)
@@ -66,45 +75,6 @@ class AddContactFragment : Fragment() {
         }
     }
 
-
-    private fun addContact(numero: String, nombre: String, email: String) {
-        // Aplicar el formato deseado al número de teléfono
-        val numeroFormateado = formatPhoneNumber(numero)
-
-        // Generar un identificador único para el contacto
-        val contactId = UUID.randomUUID().toString()
-        // Ejecutar el código para agregar el contacto aquí
-        val p = ContentValues().apply {
-            put(RawContacts.CONTACT_ID, contactId)
-        }
-
-        val rowContactUri: Uri? = requireContext().contentResolver.insert(RawContacts.CONTENT_URI, p)
-        rowContactUri?.let { rowContact ->
-            val rawContactId = ContentUris.parseId(rowContact)
-            val value = ContentValues().apply {
-                put(ContactsContract.Data.RAW_CONTACT_ID, rawContactId)
-                put(ContactsContract.Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE)
-                put(StructuredName.DISPLAY_NAME, nombre)
-            }
-            requireContext().contentResolver.insert(ContactsContract.Data.CONTENT_URI, value)
-
-            val ppv = ContentValues().apply {
-                put(ContactsContract.Data.RAW_CONTACT_ID, rawContactId)
-                put(ContactsContract.Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
-                put(Phone.NUMBER, numeroFormateado)
-                put(Phone.TYPE, Phone.TYPE_MOBILE)
-            }
-            requireContext().contentResolver.insert(ContactsContract.Data.CONTENT_URI, ppv)
-
-            val emailValues = ContentValues().apply {
-                put(ContactsContract.Data.RAW_CONTACT_ID, rawContactId)
-                put(ContactsContract.Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
-                put(Email.ADDRESS, email)
-                put(Email.TYPE, Email.TYPE_HOME)
-            }
-            requireContext().contentResolver.insert(ContactsContract.Data.CONTENT_URI, emailValues)
-        }
-    }
 
     // Función para aplicar el formato deseado al número de teléfono
     private fun formatPhoneNumber(numero: String): String {
@@ -213,9 +183,8 @@ class AddContactFragment : Fragment() {
             }
         }
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
-        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
     }
-
 }

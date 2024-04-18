@@ -137,13 +137,21 @@
                 <EditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="45dp"
+                    android:layout_marginBottom="15dp"
                     android:background="@drawable/round_configuracion"
                     android:enabled="false"
                     android:hint="text"
                     android:padding="7dp" />
 
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_add_contact"
+                    android:layout_width="match_parent"
+                    android:visibility="gone"
+                    android:layout_height="wrap_content"
+                    android:text="Add contact">
+
+                </com.google.android.material.button.MaterialButton>
             </LinearLayout>
         </LinearLayout>
 

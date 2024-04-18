@@ -20,6 +20,7 @@ import com.paquete.proyectoftg_appchat.fragmentos.ChatRoomFragment
 import com.paquete.proyectoftg_appchat.fragmentos.ConfiguracionFragment
 import com.paquete.proyectoftg_appchat.fragmentos.ContactosFragment
 import com.paquete.proyectoftg_appchat.model.DataUser
+import com.paquete.proyectoftg_appchat.room.ContactosRepository
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.UserStatusService
 import com.paquete.proyectoftg_appchat.utils.Utils
@@ -31,7 +32,7 @@ import kotlinx.coroutines.withContext
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var elementosViewModel: ElementosViewModel
-
+    private lateinit var contactosRepository: ContactosRepository
     companion object {
         private const val REQUEST_CONTACT_PERMISSIONS = 100
     }
@@ -116,24 +117,22 @@ class MainActivity : AppCompatActivity() {
         val firestore = FirebaseFirestore.getInstance()
         val usuarioActual = FirebaseAuth.getInstance().currentUser
         if (usuarioActual != null) {
-            val querySnapshot = firestore.collection("usuarios").get().await()
-            withContext(Dispatchers.IO) { // Cambiar al contexto del hilo de entrada/salida
-                for (document in querySnapshot.documents) {
-                    val fechaNacimiento = document.getString("fechaNacimiento") ?: ""
-                    val email = document.getString("email") ?: ""
-                    val nombreCompleto = document.getString("nombreCompleto") ?: ""
-                    val nombreUsuario = document.getString("nombreUsuario") ?: ""
-                    val telefono = document.getString("telefono") ?: ""
-                    val uid = document.getString("uid") ?: ""
-                    val url_image = document.getString("imageUrl") ?: ""
-                    val elemento = DataUser(uid, email, fechaNacimiento, nombreCompleto, nombreUsuario, telefono, url_image, "")
-                    elementosViewModel.insertar(elemento)
-                }
+            val uidUsuarioActual = usuarioActual.uid
+            val documentSnapshot = firestore.collection("usuarios").document(uidUsuarioActual).get().await()
+            withContext(Dispatchers.IO) {
+                val email = documentSnapshot.getString("email") ?: ""
+                val nombreCompleto = documentSnapshot.getString("nombreCompleto") ?: ""
+                val nombreUsuario = documentSnapshot.getString("nombreUsuario") ?: ""
+                val telefono = documentSnapshot.getString("telefono") ?: ""
+                val url_image = documentSnapshot.getString("imageUrl") ?: ""
+                val elemento = DataUser(uidUsuarioActual, email, nombreCompleto, nombreUsuario, telefono, url_image, "")
+                elementosViewModel.insertar(elemento)
             }
         } else {
             Log.e(TAG, "No hay usuario autenticado.")
         }
     }
+
 
 
     override fun onStart() {
@@ -160,7 +159,7 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             REQUEST_CONTACT_PERMISSIONS -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
+                    contactosRepository = ContactosRepository()
                 }
             }
         }
