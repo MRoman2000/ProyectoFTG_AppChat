@@ -81,7 +81,7 @@ dependencies {
     implementation ("androidx.camera:camera-view:1.4.0-alpha04")
 
     implementation ("com.google.firebase:firebase-storage-ktx")
-
+    implementation ("com.github.chrisbanes:PhotoView:2.3.0")
 
     implementation ("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.12.0")

@@ -68,15 +68,10 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
             FirebaseUtils.getOtrosUser(chatRoom.userIds)?.get()?.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val otherUserModel = task.result.toObject(DataUser::class.java)
-                    // Procesamos los datos del usuario
-
                     processOtherUser(chatRoom, otherUserModel)
-
                 }
             }
             mostrarDatos(chatRoom)
-
-            // Obtenemos el ID del otro usuario
 
         }
 

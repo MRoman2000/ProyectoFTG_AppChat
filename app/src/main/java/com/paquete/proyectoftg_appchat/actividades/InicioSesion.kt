@@ -18,6 +18,7 @@ class InicioSesion : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityInicioSesionBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         setupListeners()
     }
 
@@ -41,6 +42,8 @@ class InicioSesion : AppCompatActivity() {
         }
     }
 
+
+
     private fun iniciarSesion() {
         if (validarCampos()) {
             val nombrePais = binding.countryCode.selectedCountryNameCode
@@ -63,7 +66,6 @@ class InicioSesion : AppCompatActivity() {
                 }.addOnFailureListener { e ->
                     // Manejar errores de Firebase
                     Log.e("InicioSesion", "Error al iniciar sesión: $e")
-                    // Mostrar un mensaje al usuario o registrar el error de alguna manera
                 }
         }
     }

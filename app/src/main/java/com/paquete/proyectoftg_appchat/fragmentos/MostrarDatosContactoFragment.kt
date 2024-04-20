@@ -46,7 +46,6 @@ class MostrarDatosContactoFragment : Fragment() {
         elementosViewModel = ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
 
 
-
         binding.layoutSendMenssage.setOnClickListener {
             val telefono = binding.editTelefono.text.toString()
             FirebaseUtils.getFirestoreInstance().collection("usuarios").whereEqualTo("telefono", telefono).get()
@@ -213,7 +212,8 @@ class MostrarDatosContactoFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView() // Limpiar el binding al destruir la vista
-
+        _binding = null
+        (requireActivity() as AppCompatActivity).supportActionBar?.show()
     }
 
 }

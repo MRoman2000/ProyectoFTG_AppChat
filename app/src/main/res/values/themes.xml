@@ -16,7 +16,7 @@
         <item name="colorPrimaryFixed">@color/my_primary_container</item>
 
         <item name="colorOnPrimaryFixedVariant">@color/black</item>
-        <item name="colorSecondary">@color/my_secondary</item>
+        <item name="colorSecondary">@color/my_primary_container</item>
 
         <item name="colorSecondaryFixed">@color/my_primary_fixed</item>
         <item name="colorSecondaryFixedDim">@color/my_primary_fixed</item>

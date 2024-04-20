@@ -2,21 +2,27 @@ package com.paquete.proyectoftg_appchat.fragmentos
 
 
 import android.content.ContentValues.TAG
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -31,6 +37,7 @@ import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.model.Message
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.Utils
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -54,13 +61,32 @@ class MessageFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentMessageBinding.inflate(inflater, container, false)
+        val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
+        bottomNavigationView.visibility = View.GONE
         return binding.root
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val activity = requireActivity() as AppCompatActivity
-        activity.supportActionBar?.hide()
+        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        // Infla tu vista personalizada en la barra de herramientas
+        val materialToolbar = requireActivity().findViewById<MaterialToolbar>(R.id.materialToolbar)
+
+        // Infla tu vista personalizada en el MaterialToolbar
+        val inflater = LayoutInflater.from(requireContext())
+        val customToolbarView = inflater.inflate(R.layout.custom_toolbar_view, materialToolbar, false)
+
+        // Añade tu vista personalizada al MaterialToolbar
+        materialToolbar.addView(customToolbarView)
+
+        // Obtiene las referencias a los elementos en tu vista personalizada
+        val profileImage: ImageView = customToolbarView.findViewById(R.id.image_profile)
+        val usernameTextView: TextView = customToolbarView.findViewById(R.id.name_user_textView)
+        val statusTextView: TextView = customToolbarView.findViewById(R.id.status_textView)
+
+        // Actualiza la información del usuario
+        profileImage.setImageResource(R.drawable.ic_person)
 
 
         val senderUid = FirebaseAuth.getInstance().currentUser?.uid
@@ -75,14 +101,15 @@ class MessageFragment : Fragment() {
         messageList = ArrayList()
         messageAdapter = MessageAdapter(requireContext(), messageList)
 
-        val userData = arguments?.getParcelable<DataUser>("userData")
+        val userData = arguments?.getParcelable("userData", DataUser::class.java)
+
         val channelId = arguments?.getString("channelId")
-        recipientId = arguments?.getString("recipientId")
+        recipientId = arguments?.getString("recipientISd")
 
 
         // Llama al método para cargar la lista de usuarios
         elementosViewModel.cargarUsuarios()
-        binding.imageProfile.setOnClickListener {
+        profileImage.setOnClickListener {
             val profileFragment = ProfileFragment()
             val bundle = Bundle()
             bundle.putParcelable("userData", userData)
@@ -91,23 +118,16 @@ class MessageFragment : Fragment() {
         }
 
         userData?.let {
-            binding.nameUser.text = userData.nombreCompleto
-            Glide.with(requireContext()).load(userData.imageUrl).apply(RequestOptions.circleCropTransform()).into(binding.imageProfile)
+            usernameTextView.text = userData.nombreCompleto
+            Glide.with(requireContext()).load(userData.imageUrl).apply(RequestOptions.circleCropTransform()).into(profileImage)
             // Recupera y muestra el estado del usuario
-            fetchUserStatusRealTime(userData.uid)
+            fetchUserStatusRealTime(userData.uid, statusTextView)
         }
-
-
-
         recuperarMensajes(channelId.toString())
 
 
-        val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
-        bottomNavigationView.visibility = View.GONE
-
 
         binding.btnSendPhoto.setOnClickListener {
-            bottomNavigationView.visibility = View.GONE
             pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
 
@@ -234,8 +254,27 @@ class MessageFragment : Fragment() {
             }
     }
 
+    fun downloadImage(imageUrl: String) {
+        val storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl)
 
-    private fun fetchUserStatusRealTime(userId: String) {
+        // Crear un archivo temporal para almacenar la imagen descargada
+        val localFile = File.createTempFile("image", "jpg")
+
+        storageRef.getFile(localFile).addOnSuccessListener {
+            // La imagen se descargó exitosamente, ahora puedes guardarla o mostrarla en tu aplicación
+            // Por ejemplo, puedes mostrarla en un ImageView o guardarla en el almacenamiento local
+            val bitmap = BitmapFactory.decodeFile(localFile.absolutePath)
+            // Aquí puedes hacer lo que quieras con la imagen descargada, como mostrarla en un ImageView
+        }.addOnFailureListener { exception ->
+            // Ocurrió un error al descargar la imagen, maneja el error según sea necesario
+            Log.e(TAG, "Error downloading image", exception)
+            // Por ejemplo, muestra un mensaje de error al usuario
+            Toast.makeText(context, "Error al descargar la imagen", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+    private fun fetchUserStatusRealTime(userId: String, statusTextView: TextView) {
         db.collection("usuarios").document(userId).addSnapshotListener { snapshot, exception ->
             if (exception != null) {
                 Log.e(TAG, "Error al obtener el estado del usuario en tiempo real", exception)
@@ -254,9 +293,9 @@ class MessageFragment : Fragment() {
 
                 // Actualizar la interfaz de usuario según el estado y la última conexión del usuario
                 if (estado == "online") {
-                    binding.online.text = "Online"
+                    statusTextView.text = "Online"
                 } else {
-                    binding.online.text = "Última vez: $lastConnectionText"
+                    statusTextView.text = "Última vez: $lastConnectionText"
                 }
             } else {
                 Log.d(TAG, "El documento del usuario $userId no existe")
@@ -280,9 +319,16 @@ class MessageFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
+        bottomNavigationView.visibility = View.GONE
+
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        val materialToolbar = requireActivity().findViewById<MaterialToolbar>(R.id.materialToolbar)
+        val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
         bottomNavigationView.visibility = View.VISIBLE
-        (requireActivity() as AppCompatActivity).supportActionBar?.show()
-        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        materialToolbar.removeViewAt(materialToolbar.childCount - 1)
     }
 
 }

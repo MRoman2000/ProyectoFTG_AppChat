@@ -88,7 +88,6 @@ class Registro : AppCompatActivity() {
     }
 
 
-
     private fun crearUsuario(nombreUsuario: String,
         nombreCompleto: String,
         email: String,

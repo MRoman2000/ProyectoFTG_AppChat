@@ -37,9 +37,26 @@
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.ProyectoFTG_AppChat"
         tools:targetApi="31">
+
+
         <activity
             android:name=".actividades.WelcomeActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".actividades.FullScreenImageActivity"
+            android:exported="false" />
+
+
+        <receiver
+            android:name=".download.DownloadCompletedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
+            </intent-filter>
+        </receiver>
+
+
         <activity
             android:name=".actividades.NumeroVertificacion"
             android:exported="false" />
@@ -72,5 +89,6 @@
                 android:resource="@xml/file_paths" />
         </provider>
     </application>
+
 
 </manifest>

@@ -7,7 +7,7 @@ class Message {
     var message: String? = null
     var senderId: String? = null
     var timestamp: Timestamp? = null
-    var imageUrl: String? = null // Cambiado de Uri a String para almacenar la URL de la imagen
+    var imageUrl: String? = null
 
     constructor() {}
 

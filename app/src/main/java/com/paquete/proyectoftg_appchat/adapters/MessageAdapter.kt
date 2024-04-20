@@ -1,6 +1,7 @@
 package com.paquete.proyectoftg_appchat.adapters
 
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.paquete.proyectoftg_appchat.R
+import com.paquete.proyectoftg_appchat.actividades.FullScreenImageActivity
 import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.model.Message
 import java.text.SimpleDateFormat
@@ -59,10 +61,22 @@ class MessageAdapter(val context: Context, val messageList: ArrayList<Message>) 
             }
             is ImageSentViewHolder -> {
                 Glide.with(context).load(currentMessage.imageUrl).into(holder.sentImage)
+                holder.sentImage.setOnClickListener {
+                    // Cuando se hace clic en la imagen, abre una actividad o diálogo para mostrar la imagen en pantalla completa
+                    val intent = Intent(context, FullScreenImageActivity::class.java)
+                    intent.putExtra("imageUrl", currentMessage.imageUrl)
+                    context.startActivity(intent)
+                }
                 holder.time.text = sdf.format(currentMessage.timestamp!!.toDate())
             }
             is ImageReceiveViewHolder -> {
                 Glide.with(context).load(currentMessage.imageUrl).into(holder.receiveImage)
+                holder.receiveImage.setOnClickListener {
+                    // Cuando se hace clic en la imagen, abre una actividad o diálogo para mostrar la imagen en pantalla completa
+                    val intent = Intent(context, FullScreenImageActivity::class.java)
+                    intent.putExtra("imageUrl", currentMessage.imageUrl)
+                    context.startActivity(intent)
+                }
                 holder.time.text = sdf.format(currentMessage.timestamp!!.toDate())
             }
         }

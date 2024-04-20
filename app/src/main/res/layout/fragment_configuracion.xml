@@ -8,7 +8,6 @@
     tools:context=".fragmentos.ConfiguracionFragment">
 
 
-
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -209,47 +208,6 @@
 
             </RelativeLayout>
 
-            <RelativeLayout
-                android:id="@+id/layout_idioma"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:layout_marginTop="25dp"
-                android:layout_marginBottom="1dp"
-                android:background="@drawable/round_configuracion"
-                android:clickable="true"
-                android:clipToOutline="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:padding="12dp">
-
-                <ImageView
-                    android:id="@+id/icono_idioma"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginEnd="15dp"
-                    android:src="@drawable/ic_chat"
-                    app:tint="@color/white" />
-
-                <TextView
-                    android:id="@+id/texto_idioma"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_toStartOf="@id/icono_next_5"
-                    android:layout_toEndOf="@id/icono_idioma"
-                    android:text="Cuenta y Seguridad" />
-
-                <ImageView
-                    android:id="@+id/icono_next_5"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:src="@drawable/ic_next" />
-
-            </RelativeLayout>
 
             <RelativeLayout
                 android:id="@+id/layout_logout"

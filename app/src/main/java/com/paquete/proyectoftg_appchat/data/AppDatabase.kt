@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.paquete.proyectoftg_appchat.model.DataUser
 
-@Database(entities = [DataUser::class], version = 1)
+@Database(entities = [DataUser::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun datosDao(): DatosDao
 
