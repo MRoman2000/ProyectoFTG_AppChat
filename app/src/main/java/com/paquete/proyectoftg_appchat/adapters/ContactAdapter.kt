@@ -2,6 +2,7 @@ package com.paquete.proyectoftg_appchat.adapters
 
 import android.content.Context
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
@@ -30,25 +31,6 @@ class ContactAdapter(private val context: Context,
         val contacto = contactos[position]
         holder.bind(contacto)
 
-
-        /*     if (contacto.foto.isNullOrEmpty()) { // Cargar una imagen predeterminada si no hay foto
-                 holder.binding.imagenPerfil.imageView.setImageResource(R.drawable.ic_person)
-             } else { // Cargar la foto del contacto si está disponible
-                 Glide.with(holder.itemView).load(contacto.foto).apply(RequestOptions.circleCropTransform())
-                     .into(holder.binding.imagenPerfil.imageView)
-             } */
-
-
-        /*   holder.itemView.setOnClickListener {
-               contacto?.let {
-                   elementosViewModel.seleccionarContacto(contacto)
-                   val mostrar = MostrarPerfilFragment()
-                   val transaction = (context as FragmentActivity).supportFragmentManager.beginTransaction()
-                   transaction.replace(R.id.main_frame_layout, mostrar)
-                   transaction.addToBackStack(null)
-                   transaction.commit()
-               }
-           } */
     }
 
     override fun getItemCount(): Int {
@@ -60,6 +42,13 @@ class ContactAdapter(private val context: Context,
         fun bind(contacto: Contactos) {
             binding.nombre.text = contacto.nombre ?: "Sin nombre"
             binding.textViewNumero.text = contacto.numero ?: "Sin número"
+
+            // Mostrar icono si el contacto está registrado
+            if (contacto.registradoEnFirestore) {
+                binding.userRegistrado.visibility = View.VISIBLE
+            } else {
+                binding.userRegistrado.visibility = View.GONE
+            }
 
             itemView.setOnClickListener {
                 elementosViewModel.seleccionarContacto(contacto)

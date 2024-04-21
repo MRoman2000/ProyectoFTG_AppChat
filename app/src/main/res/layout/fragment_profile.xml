@@ -29,19 +29,13 @@
                 android:scaleType="centerCrop"
                 android:src="@drawable/ic_person" />
 
-            <TextView
-                android:id="@+id/edit_foto"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center"
-                android:text="Editar foto" />
 
             <!-- Campos de perfil -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
+
                 android:orientation="vertical">
 
                 <LinearLayout
@@ -49,6 +43,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp"
+                    android:layout_marginBottom="10dp"
                     android:background="@drawable/round_configuracion"
                     android:focusable="true"
                     android:foreground="?android:attr/selectableItemBackground"
@@ -60,20 +55,86 @@
                         style="@style/TextViewStyle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Nombre Completo:" />
+                        android:layout_marginStart="5dp"
+                        android:text="Nombre Completo:"
+                        android:textStyle="bold" />
 
-                    <EditText
+                    <TextView
                         android:id="@+id/edit_text_nombre_completo"
+                        style="@style/TextViewStyle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
                         android:enabled="false"
                         android:hint="text" />
                 </LinearLayout>
 
 
                 <LinearLayout
-
                     android:id="@+id/layout_nombre_usuario"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/round_configuracion"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        style="@style/TextViewStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:text="Nombre Usuario"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/edit_text_nombre_usuario"
+                        style="@style/TextViewStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:hint="text" />
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:id="@+id/layout_phone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/round_configuracion"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        style="@style/TextViewStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:text="Numero telefono"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/edit_text_telefono"
+                        style="@style/TextViewStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+
+                        android:hint="text" />
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:id="@+id/layout_email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
@@ -85,71 +146,28 @@
                     android:padding="10dp">
 
                     <TextView
+                        style="@style/TextViewStyle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Nombre Usuario" />
+                        android:layout_marginStart="5dp"
+                        android:text="Correo electronico"
+                        android:textStyle="bold" />
 
-                    <EditText
-                        android:id="@+id/edit_text_nombre_usuario"
+                    <TextView
+                        style="@style/TextViewStyle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:enabled="false"
+                        android:layout_marginStart="5dp"
                         android:hint="text" />
                 </LinearLayout>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:text="Fecha Nacimiento" />
-
-                <EditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="15dp"
-                    android:background="@drawable/round_configuracion"
-                    android:enabled="false"
-                    android:hint="text"
-                    android:padding="7dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:text="Numero telefono" />
-
-                <EditText
-                    android:id="@+id/edit_text_telefono"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="15dp"
-                    android:background="@drawable/round_configuracion"
-                    android:enabled="false"
-                    android:hint="text"
-                    android:padding="7dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:text="Correo electronico" />
-
-                <EditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="15dp"
-                    android:background="@drawable/round_configuracion"
-                    android:enabled="false"
-                    android:hint="text"
-                    android:padding="7dp" />
 
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/button_add_contact"
                     android:layout_width="match_parent"
-                    android:visibility="gone"
                     android:layout_height="wrap_content"
-                    android:text="Add contact">
+                    android:text="Add contact"
+                    android:visibility="gone">
 
                 </com.google.android.material.button.MaterialButton>
             </LinearLayout>

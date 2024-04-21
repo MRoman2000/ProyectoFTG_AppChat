@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -22,31 +21,38 @@
             android:layout_marginEnd="10dp" />
 
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical">
-
+            android:layout_height="wrap_content">
 
             <TextView
                 android:id="@+id/nombre"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignBaseline="@+id/user_registrado"
                 android:textSize="20sp"
                 tools:text="nombre" />
 
             <TextView
                 android:id="@+id/textView_numero"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_below="@id/nombre"
+                android:layout_marginTop="5dp"
                 android:textSize="15sp"
                 tools:text="numero" />
 
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/user_registrado"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginEnd="15dp"
+                android:src="@drawable/ic_check" />
 
+        </RelativeLayout>
 
     </LinearLayout>
-
 
 </LinearLayout>

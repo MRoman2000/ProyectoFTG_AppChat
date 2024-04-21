@@ -107,11 +107,10 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
                     Glide.with(binding.root.context).load(otherUserModel.imageUrl).apply(RequestOptions.circleCropTransform())
                         .into(binding.imagenPerfil.imageView)
 
-
                     itemView.setOnClickListener {
                         val profileFragment = MessageFragment()
                         val bundle = Bundle().apply {
-                            putParcelable("userData", elemento)
+                            putParcelable("dataUser", otherUserModel)
                             putString("channelId", channelId)
                             putString("recipientId", recipientId)
                             putString("nombreRemitente", nombreRemitente)

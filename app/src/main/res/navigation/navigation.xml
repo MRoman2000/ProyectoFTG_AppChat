@@ -24,7 +24,30 @@
         android:id="@+id/chatFragment"
         android:name="com.paquete.proyectoftg_appchat.fragmentos.ChatFragment"
         android:label="fragment_chat"
-        tools:layout="@layout/fragment_chat_room" />
+        tools:layout="@layout/fragment_chat_room" >
+        <action
+            android:id="@+id/action_chatFragment_to_messageFragment"
+            app:destination="@id/messageFragment" />
+    </fragment>
+    <activity
+        android:id="@+id/mainActivity"
+        android:name="com.paquete.proyectoftg_appchat.actividades.MainActivity"
+        android:label="activity_main"
+        tools:layout="@layout/activity_main" />
+    <fragment
+        android:id="@+id/configuracionFragment"
+        android:name="com.paquete.proyectoftg_appchat.fragmentos.ConfiguracionFragment"
+        android:label="fragment_configuracion"
+        tools:layout="@layout/fragment_configuracion" >
+        <action
+            android:id="@+id/action_configuracionFragment_to_mostrarPerfilFragment"
+            app:destination="@id/mostrarPerfilFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/addContactFragment"
+        android:name="com.paquete.proyectoftg_appchat.fragmentos.profile_ui.AddContactFragment"
+        android:label="fragment_add_contact"
+        tools:layout="@layout/fragment_add_contact" />
 
 
 </navigation>

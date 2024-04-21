@@ -46,13 +46,13 @@ android {
 dependencies {
     implementation ("com.hbb20:ccp:2.5.2")
     implementation(platform("com.google.firebase:firebase-bom:32.7.3"))
-    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.core:core-ktx:1.13.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
 
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("com.google.firebase:firebase-messaging:23.4.1")
-    implementation("com.google.firebase:firebase-firestore:24.11.0")
+    implementation("com.google.firebase:firebase-firestore:24.11.1")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("com.google.firebase:firebase-database-ktx:20.3.1")
     implementation("com.google.android.gms:play-services-cast-framework:21.4.0")
@@ -76,15 +76,19 @@ dependencies {
 
     implementation ("com.afollestad.material-dialogs:core:3.3.0")
 
-    implementation ("androidx.camera:camera-camera2:1.3.2")
-    implementation ("androidx.camera:camera-lifecycle:1.3.2")
-    implementation ("androidx.camera:camera-view:1.4.0-alpha04")
+    implementation ("androidx.camera:camera-camera2:1.3.3")
+    implementation ("androidx.camera:camera-lifecycle:1.3.3")
+    implementation ("androidx.camera:camera-view:1.4.0-alpha05")
+    implementation ("com.google.firebase:firebase-messaging:23.4.1")
 
     implementation ("com.google.firebase:firebase-storage-ktx")
     implementation ("com.github.chrisbanes:PhotoView:2.3.0")
 
     implementation ("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.12.0")
+
+    implementation ("com.squareup.retrofit2:retrofit:2.6.2")
+    implementation ("com.squareup.retrofit2:converter-gson:2.6.0")
 
 
 

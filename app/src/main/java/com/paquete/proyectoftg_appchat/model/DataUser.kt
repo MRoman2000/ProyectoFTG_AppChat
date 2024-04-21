@@ -15,9 +15,11 @@ data class DataUser(@PrimaryKey val uid: String,
     val nombreUsuario: String? = null,
     val telefono: String? = null,
     val imageUrl: String? = null,
+    val fcmToken: String? = null,
     val estado: String = "offline") : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString()!!,
+        parcel.readString(),
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
@@ -34,7 +36,9 @@ data class DataUser(@PrimaryKey val uid: String,
         parcel.writeString(nombreUsuario)
         parcel.writeString(telefono)
         parcel.writeString(imageUrl)
+        parcel.writeString(fcmToken)
         parcel.writeString(estado)
+
     }
 
     override fun describeContents(): Int {

@@ -37,7 +37,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:gravity="center"
-                android:hint="Nombre Completo"
+                android:hint="Text"
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
@@ -132,7 +132,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:hint="numero"
+                    android:hint="text"
                     android:textSize="16sp" />
 
 
@@ -165,7 +165,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:hint="numero"
+                    android:hint="text"
                     android:textSize="16sp" />
 
 

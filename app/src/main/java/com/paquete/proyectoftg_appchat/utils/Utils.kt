@@ -64,6 +64,7 @@ class Utils {
             }
         }
 
+
         fun setProfilePic(context: Context?, imageUri: Uri?, imageView: ImageView?) {
             Glide.with(context!!).load(imageUri).apply(RequestOptions.circleCropTransform()).into(imageView!!)
         }

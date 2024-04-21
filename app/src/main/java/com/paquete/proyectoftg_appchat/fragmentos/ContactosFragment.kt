@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.firestore.FirebaseFirestore
 import com.paquete.proyectoftg_appchat.R
 import com.paquete.proyectoftg_appchat.adapters.ContactAdapter
 import com.paquete.proyectoftg_appchat.databinding.FragmentContactosBinding
@@ -46,9 +47,9 @@ class ContactosFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         (requireActivity() as AppCompatActivity).supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(false)
+            hide()
         }
         val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
-        (requireActivity() as AppCompatActivity).supportActionBar?.hide()
         binding.searchView.getEditText().onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
             if (hasFocus) { // Ocultar el bottomNavigationView cuando la barra de búsqueda obtiene el foco
                 bottomNavigationView.visibility = View.GONE
@@ -80,6 +81,31 @@ class ContactosFragment : Fragment() {
     private fun loadContactos() {
         val elementosAdapter = ContactAdapter(requireContext(), elementosViewModel)
         val contactosDispositivo = obtenerContactosDispositivo()
+
+        val firestore = FirebaseFirestore.getInstance()
+        val contactosRegistrados = mutableSetOf<String>() // Conjunto para almacenar números de teléfono de contactos registrados
+
+        firestore.collection("usuarios").get().addOnSuccessListener { result ->
+            for (document in result) {
+                val numeroTelefono = document.getString("telefono")
+                numeroTelefono?.let {
+                    contactosRegistrados.add(it)
+                }
+            }
+
+            // Asignar la información de registro a los contactos
+            contactosDispositivo.forEach { contacto ->
+                contacto.registradoEnFirestore = contactosRegistrados.contains(contacto.numero)
+            }
+
+            // Establecer la lista de contactos en el adaptador
+            elementosAdapter.establecerListaContactos(contactosDispositivo)
+
+            // Resto del código para configurar la búsqueda y RecyclerView...
+        }.addOnFailureListener { exception ->
+            Log.e(TAG, "Error getting documents: ", exception)
+            // Manejar el error
+        }
 
         elementosAdapter.establecerListaContactos(contactosDispositivo)
         Log.d("Contactos", "Cantidad de contactos: ${contactosDispositivo.size}")
@@ -141,13 +167,7 @@ class ContactosFragment : Fragment() {
         val contentResolver = requireActivity().contentResolver
 
         // Cursor para recuperar los números de teléfono
-        val phoneCursor = contentResolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            null,
-            null,
-            null,
-            null
-        )
+        val phoneCursor = contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null)
 
         phoneCursor?.use { cursor ->
             val idIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
@@ -168,13 +188,7 @@ class ContactosFragment : Fragment() {
         }
 
         // Cursor para recuperar las direcciones de correo electrónico
-        val emailCursor = contentResolver.query(
-            ContactsContract.CommonDataKinds.Email.CONTENT_URI,
-            null,
-            null,
-            null,
-            null
-        )
+        val emailCursor = contentResolver.query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null)
         emailCursor?.use { cursor ->
             val idIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.CONTACT_ID)
             val emailIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS)

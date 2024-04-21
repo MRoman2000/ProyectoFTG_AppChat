@@ -40,11 +40,10 @@ class NumeroVertificacion : AppCompatActivity() {
         setContentView(view)
         auth = FirebaseAuth.getInstance()
 
-
         setupViews()
 
-
     }
+
 
     fun setupViews() {
         binding.botonComprobarCodigo.setOnClickListener { checkVerificationCode() }
@@ -128,7 +127,7 @@ class NumeroVertificacion : AppCompatActivity() {
     }
 
     private fun startPhoneNumberVerification(phoneNumber: String, isLogin: Boolean) {
-        val opcion = PhoneAuthOptions.newBuilder(auth).setPhoneNumber(phoneNumber).setTimeout(20L, TimeUnit.SECONDS).setActivity(this)
+        val opcion = PhoneAuthOptions.newBuilder(auth).setPhoneNumber(phoneNumber).setTimeout(60L, TimeUnit.SECONDS).setActivity(this)
             .setCallbacks(object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
                 override fun onVerificationCompleted(credential: PhoneAuthCredential) {
                     signInWithPhoneAuthCredential(credential, isLogin)
@@ -168,11 +167,13 @@ class NumeroVertificacion : AppCompatActivity() {
                 if (isLogin) {
                     val intent = Intent(this, MainActivity::class.java)
                     startActivity(intent)
+                    finish()
                 } else {
                     val numeroTelefono = binding.countryCode.formattedFullNumber
                     val intent = Intent(this, Registro::class.java)
                     intent.putExtra("numeroTelefono", numeroTelefono)
                     startActivity(intent)
+                    finish()
                 }
             } else {
                 binding.inputCodigoVertificacion.error = "El código de verificación es incorrecto"

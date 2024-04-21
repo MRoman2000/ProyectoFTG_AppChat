@@ -14,6 +14,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.paquete.proyectoftg_appchat.R
 import com.paquete.proyectoftg_appchat.actividades.SplashActivity
 import com.paquete.proyectoftg_appchat.databinding.FragmentSecurityBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 
 class SecurityFragment : Fragment() {
@@ -42,13 +47,18 @@ class SecurityFragment : Fragment() {
                 setTitle("Eliminar cuenta")
                 setMessage("¿Estás seguro de que quieres eliminar tu cuenta? Todos tus datos serán eliminados de forma permanente.")
                 setPositiveButton("Sí") { _, _ ->
-                    // Eliminar datos de Firebase Firestore
-                    val db = FirebaseFirestore.getInstance()
-                    val userDocRef = db.collection("usuarios").document(user?.uid ?: "")
-                    userDocRef.delete().addOnSuccessListener {
 
-                        user?.delete()?.addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        // Eliminar datos de Firebase Firestore
+                        val db = FirebaseFirestore.getInstance()
+                        val userDocRef = db.collection("usuarios").document(user?.uid ?: "")
+                        try {
+                            userDocRef.delete().await()
+
+                            // Eliminar autenticación
+                            user?.delete()?.await()
+
+                            withContext(Dispatchers.Main) {
                                 // Autenticación eliminada correctamente
                                 val intent = Intent(context, SplashActivity::class.java).apply {
                                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -56,18 +66,18 @@ class SecurityFragment : Fragment() {
                                 val options =
                                     ActivityOptions.makeCustomAnimation(requireContext(), R.anim.slide_in_right, R.anim.slide_out_left)
                                 startActivity(intent, options.toBundle())
-                            } else {
-                                // Error al eliminar la autenticación
                             }
+                        } catch (e: Exception) {
+                            // Manejar errores
                         }
-                    }.addOnFailureListener { e ->
-                        // Error al eliminar datos de Firestore
                     }
                 }
                 setNegativeButton("No") { _, _ -> }
             }.show()
         }
+
     }
+
     override fun onDestroyView() {
         super.onDestroyView() // Limpiar el binding al destruir la vista
         (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)

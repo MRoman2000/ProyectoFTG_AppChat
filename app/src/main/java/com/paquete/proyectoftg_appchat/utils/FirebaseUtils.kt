@@ -1,8 +1,10 @@
 package com.paquete.proyectoftg_appchat.utils
 
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
@@ -37,7 +39,12 @@ class FirebaseUtils {
         }
 
         fun allusers(): CollectionReference? {
-            return FirebaseFirestore.getInstance().collection("usuarios")
+            return db.collection("usuarios")
+        }
+
+        fun getFCMToken(userId: String): Task<DocumentSnapshot> {
+            val userRef = db.collection("usuarios").document(userId)
+            return userRef.get()
         }
 
         /**
@@ -46,7 +53,26 @@ class FirebaseUtils {
         fun signOut() {
             firebaseAuth.value.signOut()
         }
+        fun eliminarTokenAlCerrarSesion() {
+            val currentUser = firebaseAuth.value.currentUser
+            currentUser?.let { user ->
+                val uidUsuarioActual = user.uid
+                val firestore = FirebaseFirestore.getInstance()
+                val usuarioRef = firestore.collection("usuarios").document(uidUsuarioActual)
+
+                // Eliminar el token FCM del documento del usuario
+                usuarioRef.update("fcmToken", null).addOnSuccessListener {
+                    // Éxito al eliminar el token
+                    // Aquí puedes realizar cualquier acción adicional si es necesario
+                }.addOnFailureListener { e ->
+                    // Error al eliminar el token
+                    // Manejar el error según sea necesario
+                }
+            }
+        }
     }
+
+
 }
 
 

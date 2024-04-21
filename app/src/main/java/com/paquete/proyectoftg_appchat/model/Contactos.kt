@@ -9,14 +9,26 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-data class Contactos(var id: String?, var nombre: String?, var numero: String?, var email: String?) : Parcelable {
-    constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readString())
+data class Contactos(
+    var id: String?,
+    var nombre: String?,
+    var numero: String?,
+    var email: String?,
+    var registradoEnFirestore: Boolean = false // Nuevo booleano para indicar si está registrado en Firestore
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+    )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(id)
         parcel.writeString(nombre)
         parcel.writeString(numero)
         parcel.writeString(email)
+
     }
 
     override fun describeContents(): Int {
@@ -31,6 +43,7 @@ data class Contactos(var id: String?, var nombre: String?, var numero: String?, 
         override fun newArray(size: Int): Array<Contactos?> {
             return arrayOfNulls(size)
         }
+
 
         suspend fun obtenerContactos(contexto: Context): List<Contactos>? {
             return try {

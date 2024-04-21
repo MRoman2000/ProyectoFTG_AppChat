@@ -1,25 +1,39 @@
 package com.paquete.proyectoftg_appchat.fragmentos
 
+import android.Manifest
 import android.app.ActivityOptions
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.appcompat.app.AlertDialog
+import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 import com.paquete.proyectoftg_appchat.R
 import com.paquete.proyectoftg_appchat.actividades.SplashActivity
+import com.paquete.proyectoftg_appchat.data.AppDatabase
 import com.paquete.proyectoftg_appchat.databinding.FragmentConfiguracionBinding
 import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.ProfileFragment
 import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.SecurityFragment
@@ -28,8 +42,10 @@ import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import com.paquete.proyectoftg_appchat.utils.Utils
 import com.paquete.proyectoftg_appchat.utils.Utils.Companion.updateUserStatusOffline
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.Locale
+import java.io.File
 
 
 class ConfiguracionFragment : Fragment() {
@@ -40,7 +56,27 @@ class ConfiguracionFragment : Fragment() {
     private val PREFS_KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
     private val PREFS_KEY_THEME = "theme_preference"
     private var _binding: FragmentConfiguracionBinding? = null
+    private val storage = Firebase.storage
+    private val storageRef = storage.reference
+    private lateinit var url: Uri
+
     private val binding get() = _binding!!
+
+    val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { url ->
+        if (url != null) {
+            saveImageUrlToFirebase(url)
+        }
+    }
+
+    private val takePicture = registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
+        if (isSuccess) {
+            saveImageUrlToFirebase(url)
+            Toast.makeText(requireContext(), "Foto capturada con éxito", Toast.LENGTH_SHORT).show()
+        } else {
+            // Hubo un error al capturar la foto
+            Toast.makeText(requireContext(), "Error al capturar la foto", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentConfiguracionBinding.inflate(inflater, container, false)
@@ -54,6 +90,7 @@ class ConfiguracionFragment : Fragment() {
         (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
         val usuarioActual = FirebaseUtils.getCurrentUserId()
 
+        url = createImageUri()
 
         // Utilizar los datos del usuario actual si ya están disponibles
         userData?.let {
@@ -70,6 +107,8 @@ class ConfiguracionFragment : Fragment() {
                 binding.textNombreUsuario.text = it.nombreUsuario ?: ""
             }
         }
+
+
 
         binding.layoutProfile.setOnClickListener {
             val profileFragment = ProfileFragment()
@@ -131,67 +170,108 @@ class ConfiguracionFragment : Fragment() {
             Utils.navigateToFragment(requireActivity(), security)
         }
 
+        binding.editFoto.setOnClickListener {
+            showOptionsDialog()
 
-        binding.layoutIdioma.setOnClickListener {
-            val languages = arrayOf("English", "Spanish") // Lista de idiomas disponibles
-
-            val builder = AlertDialog.Builder(requireActivity())
-            builder.setTitle("Select Language")
-            builder.setItems(languages) { dialog, which ->
-                when (which) {
-                    0 -> {
-                        setLocale("en") // Idioma inglés
-                        //    sharedPref.edit().putString("language", "en").apply()
-                    }
-
-                    1 -> {
-                        setLocale("es") // Idioma español
-                        //     sharedPref.edit().putString("language", "es").apply()
-                    }
-                }
-            }
-            builder.show()
         }
-
-
-
 
         binding.layoutLogout.setOnClickListener {
             cerrarSesion()
         }
     }
 
-    // Función para cargar los datos del usuario en la interfaz de usuario
-    fun cargarDatosUsuario(userData: DataUser?) {
-        userData?.let { user ->
-            loadImageFromUrl(user.imageUrl.toString(), binding.imagenPerfil)
-            binding.textNombreCompleto.text = user.nombreCompleto ?: ""
-            binding.textNombreUsuario.text = user.nombreUsuario ?: ""
+
+    private fun showOptionsDialog() {
+        val options = arrayOf<CharSequence>("Tomar foto", "Elegir de la galería", "Cancelar")
+        MaterialAlertDialogBuilder(requireActivity()).setTitle("Elige una opción").setItems(options) { _, item ->
+            when (options[item]) {
+                "Tomar foto" -> requestCameraPermission()
+                "Elegir de la galería" -> pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        }.show()
+    }
+
+    private fun requestCameraPermission() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            // El permiso de cámara ya está otorgado, puedes proceder a capturar la foto
+            takePicture.launch(url)
+        } else {
+            // El permiso de cámara aún no se ha otorgado, solicita el permiso al usuario
+            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
-// Llamamos a la función para cargar los datos del usuario cuando se tenga la información disponible
+    private fun saveImageUrlToFirebase(imageUri: Uri) {
+        val usuarioActual = FirebaseUtils.getCurrentUserId()
 
-    fun mostrarDatos(userList: List<DataUser>) {
-        val userId = FirebaseUtils.getCurrentUserId() // Obtener el ID del usuario actual
-        val currentUser = userList.find { it.uid == userId } // Encontrar el usuario actual en la lista de usuarios
+        val imagesRef = storageRef.child("profile_user/$usuarioActual")
 
-        currentUser?.let { user ->
-            // Mostrar los datos del usuario en la interfaz de usuario
-            loadImageFromUrl(user.imageUrl.toString(), binding.imagenPerfil)
-            binding.textNombreCompleto.text = user.nombreCompleto ?: ""
-            binding.textNombreUsuario.text = user.nombreUsuario ?: ""
+        // Subir el archivo de imagen al Firebase Storage
+        imagesRef.putFile(imageUri).addOnSuccessListener { taskSnapshot ->
+            // Obtener la URL de descarga de la imagen
+            imagesRef.downloadUrl.addOnSuccessListener { uri ->
+                val downloadUrl = uri.toString()
+                loadImageFromUrl(downloadUrl, binding.imagenPerfil)
+
+                // Actualizar la URL de la imagen en Firestore
+                saveImageUrlToFirestore(downloadUrl)
+
+                // Actualizar la URL de la imagen en la base de datos Room
+                val usuarioActual = FirebaseAuth.getInstance().currentUser
+                usuarioActual?.uid?.let { userId ->
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val userDao = AppDatabase.getDatabase(requireContext()).datosDao()
+                        userDao.updateUserImageUrl(userId, downloadUrl)
+                    }
+                }
+
+                Log.d("Foto", downloadUrl)
+                Toast.makeText(requireContext(), "Imagen subida exitosamente", Toast.LENGTH_SHORT).show()
+            }.addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Error al obtener la URL de descarga: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }.addOnFailureListener { e ->
+            Toast.makeText(requireContext(), "Error al subir la imagen: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
 
-    fun setLocale(languageCode: String) {
-        val locale = Locale(languageCode)
-        Locale.setDefault(locale)
-        val resources = resources
-        val config = Configuration(resources.configuration)
-        config.setLocale(locale)
-        resources.updateConfiguration(config, resources.displayMetrics)
+    private fun saveImageUrlToFirestore(imageUrl: String) {
+        val usuarioActual = FirebaseAuth.getInstance().currentUser
+        usuarioActual?.uid?.let { userId ->
+            val db = FirebaseFirestore.getInstance()
+            val userRef = db.collection("usuarios").document(userId)
+            userRef.update("imageUrl", imageUrl).addOnSuccessListener {
+                Log.d("Error foto", "URL de la imagen guardada en Firestore")
+            }.addOnFailureListener { e ->
+                Log.w(ContentValues.TAG, "Error al guardar la URL de la imagen en Firestore", e)
+            }
+        }
+    }
+
+
+    private val requestCameraPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                // El usuario otorgó permiso de cámara, puedes proceder a capturar la foto
+                takePicture.launch(url)
+            } else {
+                // El usuario denegó el permiso de cámara, muestra un mensaje o realiza alguna acción apropiada
+                Toast.makeText(requireContext(), "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    private fun createImageUri(): Uri {
+        // Obtenemos el directorio de archivos de la aplicación
+        val storageDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+
+        // Creamos un archivo temporal en el directorio de imágenes
+        val imageFile = File.createTempFile("temp_image", /* prefijo */
+            ".png", /* sufijo */
+            storageDir /* directorio */)
+
+        // Devolvemos el URI del archivo temporal utilizando FileProvider
+        return FileProvider.getUriForFile(requireContext(), "com.paquete.proyectoftg_appchat.fileprovider", imageFile)
     }
 
 
@@ -228,6 +308,7 @@ class ConfiguracionFragment : Fragment() {
                 lifecycleScope.launch {
                     updateUserStatusOffline()
                     FirebaseUtils.signOut()
+                    FirebaseUtils.eliminarTokenAlCerrarSesion()
                     val intent = Intent(context, SplashActivity::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     }
@@ -238,6 +319,7 @@ class ConfiguracionFragment : Fragment() {
             setNegativeButton("No") { _, _ -> }
         }.show()
     }
+
 }
 
 

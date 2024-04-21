@@ -12,13 +12,11 @@ import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.paquete.proyectoftg_appchat.R
 import com.paquete.proyectoftg_appchat.actividades.FullScreenImageActivity
-import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.model.Message
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class MessageAdapter(val context: Context, val messageList: ArrayList<Message>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    private var userList: List<DataUser> = emptyList()
     val ITEM_RECEIVE = 1
     val ITEM_SENT = 2
     val ITEM_IMAGE_RECEIVE = 3
@@ -30,18 +28,22 @@ class MessageAdapter(val context: Context, val messageList: ArrayList<Message>) 
                 val view: View = LayoutInflater.from(context).inflate(R.layout.message_item_right, parent, false)
                 SentViewHolder(view)
             }
+
             ITEM_RECEIVE -> {
                 val view: View = LayoutInflater.from(context).inflate(R.layout.message_item_left, parent, false)
                 ReceiveViewHolder(view)
             }
+
             ITEM_IMAGE_SENT -> {
                 val view: View = LayoutInflater.from(context).inflate(R.layout.message_item_image_right, parent, false)
                 ImageSentViewHolder(view)
             }
+
             ITEM_IMAGE_RECEIVE -> {
                 val view: View = LayoutInflater.from(context).inflate(R.layout.message_item_image_left, parent, false)
                 ImageReceiveViewHolder(view)
             }
+
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
@@ -55,10 +57,12 @@ class MessageAdapter(val context: Context, val messageList: ArrayList<Message>) 
                 holder.sentMessage.text = currentMessage.message
                 holder.time.text = sdf.format(currentMessage.timestamp!!.toDate())
             }
+
             is ReceiveViewHolder -> {
                 holder.receiveMessage.text = currentMessage.message
                 holder.time.text = sdf.format(currentMessage.timestamp!!.toDate())
             }
+
             is ImageSentViewHolder -> {
                 Glide.with(context).load(currentMessage.imageUrl).into(holder.sentImage)
                 holder.sentImage.setOnClickListener {
@@ -69,6 +73,7 @@ class MessageAdapter(val context: Context, val messageList: ArrayList<Message>) 
                 }
                 holder.time.text = sdf.format(currentMessage.timestamp!!.toDate())
             }
+
             is ImageReceiveViewHolder -> {
                 Glide.with(context).load(currentMessage.imageUrl).into(holder.receiveImage)
                 holder.receiveImage.setOnClickListener {

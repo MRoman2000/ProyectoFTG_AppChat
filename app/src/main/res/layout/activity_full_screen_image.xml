@@ -17,9 +17,9 @@
             android:id="@+id/materialToolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?attr/colorPrimary"
             app:contentInsetStart="0dp"
             app:layout_scrollEffect="compress"
+            style="@style/ToolbarStyle"
             app:layout_scrollFlags="scroll|enterAlways|snap"
             app:title="Imagen"
             app:titleCentered="true">
@@ -30,7 +30,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:paddingTop="8dp"
-                android:paddingEnd="16dp"
+                android:paddingEnd="20dp"
                 android:paddingBottom="8dp"
                 android:src="@drawable/ic_download" />
 

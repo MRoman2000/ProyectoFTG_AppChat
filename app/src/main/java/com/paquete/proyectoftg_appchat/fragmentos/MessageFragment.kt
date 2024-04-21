@@ -2,7 +2,6 @@ package com.paquete.proyectoftg_appchat.fragmentos
 
 
 import android.content.ContentValues.TAG
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -29,15 +28,22 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
+import com.google.gson.Gson
 import com.paquete.proyectoftg_appchat.R
+import com.paquete.proyectoftg_appchat.actividades.notifications.NotificationData
+import com.paquete.proyectoftg_appchat.actividades.notifications.PushNotification
+import com.paquete.proyectoftg_appchat.actividades.notifications.RetrofitInstance
 import com.paquete.proyectoftg_appchat.adapters.MessageAdapter
 import com.paquete.proyectoftg_appchat.databinding.FragmentMessageBinding
 import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.ProfileFragment
 import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.model.Message
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
+import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import com.paquete.proyectoftg_appchat.utils.Utils
-import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -48,15 +54,14 @@ class MessageFragment : Fragment() {
 
     private var _binding: FragmentMessageBinding? = null
     private val binding get() = _binding!!
-    private val elementosViewModel by lazy {
-        ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
-    }
     private val db = FirebaseFirestore.getInstance()
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var messageList: ArrayList<Message>
     private lateinit var mDbRef: FirebaseFirestore
-    private var recipientId: String? = null
     private lateinit var linearLayoutManager: LinearLayoutManager
+    private val elementosViewModel by lazy {
+        ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
+    }
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -87,9 +92,14 @@ class MessageFragment : Fragment() {
 
         // Actualiza la información del usuario
         profileImage.setImageResource(R.drawable.ic_person)
+        val userData = arguments?.getParcelable<DataUser>("dataUser")
+        val channelId = arguments?.getString("channelId")
+        val recipientId = arguments?.getString("recipientId")
+        val nombreRemitente = arguments?.getString("nombreRemitente")
 
 
         val senderUid = FirebaseAuth.getInstance().currentUser?.uid
+
         val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri != null) {
                 // Aquí puedes llamar a tu función sendMessage pasando la URI de la imagen
@@ -97,18 +107,13 @@ class MessageFragment : Fragment() {
             }
         }
 
+
+
         mDbRef = FirebaseFirestore.getInstance()
         messageList = ArrayList()
         messageAdapter = MessageAdapter(requireContext(), messageList)
 
-        val userData = arguments?.getParcelable("userData", DataUser::class.java)
 
-        val channelId = arguments?.getString("channelId")
-        recipientId = arguments?.getString("recipientISd")
-
-
-        // Llama al método para cargar la lista de usuarios
-        elementosViewModel.cargarUsuarios()
         profileImage.setOnClickListener {
             val profileFragment = ProfileFragment()
             val bundle = Bundle()
@@ -118,7 +123,7 @@ class MessageFragment : Fragment() {
         }
 
         userData?.let {
-            usernameTextView.text = userData.nombreCompleto
+            usernameTextView.text = nombreRemitente.toString()
             Glide.with(requireContext()).load(userData.imageUrl).apply(RequestOptions.circleCropTransform()).into(profileImage)
             // Recupera y muestra el estado del usuario
             fetchUserStatusRealTime(userData.uid, statusTextView)
@@ -131,12 +136,10 @@ class MessageFragment : Fragment() {
             pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
 
-        // En el método onActivityResult
 
         binding.btnSendMessage.setOnClickListener {
             sendMessage(senderUid.toString(), recipientId.toString())
         }
-
 
     }
 
@@ -196,35 +199,84 @@ class MessageFragment : Fragment() {
 
     fun sendMessage(senderUid: String, recipientId: String, imageUri: Uri? = null) {
         val message = binding.editTextMessege.text.toString().trim()
-        if (message.isNotEmpty() || imageUri != null) {
-            val currentTime = Timestamp.now()
 
-            if (imageUri != null) {
-                // Si hay una imagen, subirla a Firebase Storage
-                val storageRef = FirebaseStorage.getInstance().reference.child("images/${UUID.randomUUID()}")
-                storageRef.putFile(imageUri).addOnSuccessListener { taskSnapshot ->
-                    // Obtener la URL de la imagen cargada
-                    storageRef.downloadUrl.addOnSuccessListener { uri ->
-                        val imageUrl = uri.toString()
-                        val messageObject = Message(message, senderUid, currentTime, imageUrl)
-                        sendMessageToFirestore(senderUid, recipientId, messageObject)
-                    }.addOnFailureListener { e ->
-                        // Manejar errores al obtener la URL de la imagen
+        // Recuperar el número de teléfono del usuario actual desde el almacenamiento local
+        elementosViewModel.obtenerDatosYElementoUsuarioActual(FirebaseUtils.getCurrentUserId()).observe(viewLifecycleOwner) { datauser ->
+            datauser?.let { user ->
+                val phoneNumber = datauser.telefono
+
+                // Luego, continuar con el envío del mensaje utilizando el número de teléfono recuperado
+                val userTask = FirebaseUtils.getFCMToken(recipientId)
+
+                userTask.addOnSuccessListener { documentSnapshot ->
+                    if (documentSnapshot.exists()) {
+                        val userData = documentSnapshot.toObject(DataUser::class.java)
+                        val recipientToken = userData?.fcmToken
+                        Log.d("FCM", "$recipientToken")
+                        if (message.isNotEmpty() || imageUri != null) {
+                            val currentTime = Timestamp.now()
+
+                            if (imageUri != null) {
+                                val storageRef = FirebaseStorage.getInstance().reference.child("images/${UUID.randomUUID()}")
+                                storageRef.putFile(imageUri).addOnSuccessListener { taskSnapshot ->
+                                    storageRef.downloadUrl.addOnSuccessListener { uri ->
+                                        val imageUrl = uri.toString()
+                                        val messageObject = Message(message, senderUid, currentTime, imageUrl)
+                                        sendMessageToFirestore(senderUid, recipientId, messageObject)
+                                        if (recipientToken != null) {
+                                            PushNotification(NotificationData(phoneNumber.toString(), "imagen"), recipientToken).also {
+                                                sendNotification(it)
+                                            }
+                                        } else {
+                                            // El destinatario no tiene un token FCM registrado
+                                        }
+                                    }.addOnFailureListener { e ->
+                                        // Manejar errores al obtener la URL de la imagen
+                                    }
+                                }.addOnFailureListener { e ->
+                                    // Manejar errores al cargar la imagen
+                                }
+                            } else {
+                                val messageObject = Message(message, senderUid, currentTime)
+                                sendMessageToFirestore(senderUid, recipientId, messageObject)
+                                if (recipientToken != null) {
+                                    PushNotification(NotificationData(phoneNumber.toString(), message), recipientToken).also {
+                                        sendNotification(it)
+                                    }
+                                } else {
+                                    // El destinatario no tiene un token FCM registrado
+                                }
+                            }
+                        } else {
+                            Toast.makeText(context, "No puedes enviar un mensaje vacío", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        // No se encontró el documento del usuario
                     }
-                }.addOnFailureListener { e ->
-                    // Manejar errores al cargar la imagen
+                }.addOnFailureListener { exception ->
+                    // Manejar errores al obtener el token FCM
                 }
-            } else {
-                val messageObject = Message(message, senderUid, currentTime)
-                sendMessageToFirestore(senderUid, recipientId, messageObject)
             }
-        } else {
-            Toast.makeText(context, "No puedes enviar un mensaje vacío", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+    private fun sendNotification(notification: PushNotification) = CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val response = RetrofitInstance.api.postNotification(notification)
+            if (response.isSuccessful) {
+                Log.d(TAG, "Response: ${Gson().toJson(response)}")
+            } else {
+                Log.e(TAG, response.errorBody().toString())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, e.toString())
         }
     }
 
     private fun sendMessageToFirestore(senderUid: String, recipientId: String, messageObject: Message) {
         // Guardar el mensaje en la colección de mensajes del chat
+
         val chatroomId = generateChatroomId(senderUid, recipientId)
         val messageCollectionRef = mDbRef.collection("chats").document(chatroomId).collection("messages")
         messageCollectionRef.add(messageObject)
@@ -242,8 +294,7 @@ class MessageFragment : Fragment() {
                     "chatroomId" to chatroomId,
                     "lastMessage" to lastMessageContent,
                     "lastMessageSenderId" to senderUid,
-                    "lastMessageTimestamp" to messageObject.timestamp,
-                    "lastMessageImageUrl" to messageObject.imageUrl)
+                    "lastMessageTimestamp" to messageObject.timestamp)
 
                 chatRef.set(data, SetOptions.merge()).addOnSuccessListener { // Chat actualizado exitosamente
                     binding.editTextMessege.text = null
@@ -252,25 +303,6 @@ class MessageFragment : Fragment() {
                 }
             }.addOnFailureListener { e -> // Manejar el fallo al enviar el mensaje
             }
-    }
-
-    fun downloadImage(imageUrl: String) {
-        val storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl)
-
-        // Crear un archivo temporal para almacenar la imagen descargada
-        val localFile = File.createTempFile("image", "jpg")
-
-        storageRef.getFile(localFile).addOnSuccessListener {
-            // La imagen se descargó exitosamente, ahora puedes guardarla o mostrarla en tu aplicación
-            // Por ejemplo, puedes mostrarla en un ImageView o guardarla en el almacenamiento local
-            val bitmap = BitmapFactory.decodeFile(localFile.absolutePath)
-            // Aquí puedes hacer lo que quieras con la imagen descargada, como mostrarla en un ImageView
-        }.addOnFailureListener { exception ->
-            // Ocurrió un error al descargar la imagen, maneja el error según sea necesario
-            Log.e(TAG, "Error downloading image", exception)
-            // Por ejemplo, muestra un mensaje de error al usuario
-            Toast.makeText(context, "Error al descargar la imagen", Toast.LENGTH_SHORT).show()
-        }
     }
 
 
@@ -301,9 +333,8 @@ class MessageFragment : Fragment() {
                 Log.d(TAG, "El documento del usuario $userId no existe")
             }
         }
-
-
     }
+
 
     private fun generateChatroomId(sender: String, receiver: String): String {
         val participants = listOf(sender, receiver).sorted()
@@ -322,6 +353,7 @@ class MessageFragment : Fragment() {
         bottomNavigationView.visibility = View.GONE
 
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
