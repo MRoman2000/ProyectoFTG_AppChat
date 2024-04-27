@@ -1,4 +1,4 @@
-package com.paquete.proyectoftg_appchat.actividades.notifications
+package com.paquete.proyectoftg_appchat.notifications
 
 
 data class NotificationData(

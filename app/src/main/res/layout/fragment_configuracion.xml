@@ -20,6 +20,17 @@
             android:padding="10dp">
 
 
+            <TextView
+                android:id="@+id/text_nombreCompleto"
+                style="@style/TextViewStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:hint="text"
+                android:textSize="25sp"
+                android:textStyle="bold" />
+
+
             <ImageView
                 android:id="@+id/imagen_perfil"
                 android:layout_width="120dp"
@@ -31,30 +42,14 @@
 
             <TextView
                 android:id="@+id/edit_foto"
+                style="@style/TextViewStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginBottom="40dp"
                 android:gravity="center"
-                android:text="Editar foto" />
-
-            <TextView
-                android:id="@+id/text_nombreUsuario"
-                style="@style/TextViewStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginTop="20dp"
-                android:hint="text"
-                android:textAlignment="center"
-                android:textSize="25sp" />
-
-            <TextView
-                android:id="@+id/text_nombreCompleto"
-                style="@style/TextViewStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:hint="text"
-                android:textSize="18sp" />
+                android:text="Editar foto"
+                android:textColor="@color/my_primary" />
 
 
             <RelativeLayout
@@ -138,6 +133,7 @@
             </RelativeLayout>
 
             <RelativeLayout
+                android:id="@+id/layout_notification"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_margin="1dp"
@@ -180,7 +176,7 @@
                 android:id="@+id/layout_security"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
-                android:layout_marginTop="40dp"
+
                 android:layout_marginBottom="1dp"
                 android:background="@drawable/round_configuracion"
                 android:clickable="true"
@@ -222,7 +218,7 @@
                 android:id="@+id/layout_logout"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
-                android:layout_margin="1dp"
+                android:layout_marginTop="50dp"
                 android:background="@drawable/round_configuracion"
                 android:clickable="true"
                 android:clipToOutline="true"

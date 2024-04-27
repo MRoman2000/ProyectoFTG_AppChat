@@ -7,12 +7,14 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
-import com.google.firebase.auth.FirebaseAuth
 import com.paquete.proyectoftg_appchat.databinding.FragmentProfileBinding
 import com.paquete.proyectoftg_appchat.model.Contactos
 import com.paquete.proyectoftg_appchat.model.DataUser
+import com.paquete.proyectoftg_appchat.room.ElementosViewModel
+import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import com.paquete.proyectoftg_appchat.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,9 +25,9 @@ import kotlinx.coroutines.withContext
 class ProfileFragment : Fragment() {
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
-
-
-
+    private val elementosViewModel by lazy {
+        ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
+    }
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -39,15 +41,15 @@ class ProfileFragment : Fragment() {
             title = "Informacion de Perfil"
             setDisplayHomeAsUpEnabled(true)
         }
-        val usuarioActual = FirebaseAuth.getInstance().currentUser?.uid
+
 
         val userData = arguments?.getParcelable<DataUser>("userData")
         userData?.let {
-            // Utiliza los datos del usuario aquí
             loadImageFromUrl(it.imageUrl.toString(), binding.imagenPerfil)
-            binding.editTextNombreCompleto.setText(it.nombreCompleto ?: "")
-            binding.editTextNombreUsuario.setText(it.nombreUsuario ?: "")
-            binding.editTextTelefono.setText(it.telefono ?: "")
+            binding.editTextNombreCompleto.text = it.nombreCompleto ?: ""
+            binding.editTextNombreUsuario.text = it.nombreUsuario ?: ""
+            binding.editTextTelefono.text = it.telefono ?: ""
+            binding.textViewEmail.text = it.email ?: ""
         }
 
         addContacto(userData)
@@ -55,28 +57,41 @@ class ProfileFragment : Fragment() {
 
 
     private fun addContacto(userData: DataUser?) {
-        val numero = userData?.telefono
-        CoroutineScope(Dispatchers.Main).launch {
-            val contactos = withContext(Dispatchers.IO) {
-                Contactos.obtenerContactos(requireContext())
-            }
-            val usuario = contactos?.find { it.numero == numero }
-            binding.buttonAddContact.visibility = View.VISIBLE
-            if (usuario == null) {
-                binding.buttonAddContact.setOnClickListener {
-                    val addContactFragment = AddContactFragment()
-                    val bundle = Bundle().apply {
-                        putString("numero", numero)
+        elementosViewModel.obtenerDatosYElementoUsuarioActual(FirebaseUtils.getCurrentUserId()).observe(viewLifecycleOwner) { datauser ->
+            datauser?.let {
+                val numeroActual = datauser.telefono
+
+                val numero = userData?.telefono
+                if (numero == numeroActual) {
+                    // Si el número coincide con el del usuario actual, ocultar el botón de agregar
+                    binding.buttonAddContact.visibility = View.GONE
+                } else {
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val contactos = withContext(Dispatchers.IO) {
+                            Contactos.obtenerContactos(requireContext())
+                        }
+                        val usuario = contactos?.find { it.numero == numero }
+
+                        // Si el número no está en la lista de contactos, mostrar el botón de agregar y configurar el listener
+                        if (usuario == null) {
+                            binding.buttonAddContact.visibility = View.VISIBLE
+                            binding.buttonAddContact.setOnClickListener {
+                                val addContactFragment = AddContactFragment()
+                                val bundle = Bundle().apply {
+                                    putString("numero", numero)
+                                }
+                                addContactFragment.arguments = bundle
+                                Utils.navigateToFragment(requireActivity(), addContactFragment)
+                            }
+                        } else {
+                            // Si el número está en la lista de contactos, ocultar el botón de agregar
+                            binding.buttonAddContact.visibility = View.GONE
+                        }
                     }
-                    addContactFragment.arguments = bundle
-                    Utils.navigateToFragment(requireActivity(), addContactFragment)
                 }
-            } else {
-                binding.buttonAddContact.visibility = View.GONE
             }
         }
     }
-
 
 
     private fun loadImageFromUrl(imageUrl: String, imageView: ImageView) {
@@ -89,7 +104,4 @@ class ProfileFragment : Fragment() {
         (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
-    companion object {
-        private const val REQUEST_CAMERA_PERMISSION = 101
-    }
 }

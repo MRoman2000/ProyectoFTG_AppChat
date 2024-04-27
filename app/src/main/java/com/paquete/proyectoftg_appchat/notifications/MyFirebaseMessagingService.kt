@@ -1,4 +1,4 @@
-package com.paquete.proyectoftg_appchat.actividades.notifications
+package com.paquete.proyectoftg_appchat.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

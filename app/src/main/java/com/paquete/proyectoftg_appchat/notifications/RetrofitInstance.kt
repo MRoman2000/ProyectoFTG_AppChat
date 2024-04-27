@@ -1,6 +1,6 @@
-package com.paquete.proyectoftg_appchat.actividades.notifications
+package com.paquete.proyectoftg_appchat.notifications
 
-import com.paquete.proyectoftg_appchat.actividades.notifications.Constants.Companion.BASE_URL
+import com.paquete.proyectoftg_appchat.notifications.Constants.Companion.BASE_URL
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 

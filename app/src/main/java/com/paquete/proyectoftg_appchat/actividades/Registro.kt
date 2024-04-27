@@ -9,11 +9,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.paquete.proyectoftg_appchat.databinding.ActivityRegistroBinding
-import com.paquete.proyectoftg_appchat.firebaseutil.FirebaseAuthHelper
-import com.paquete.proyectoftg_appchat.firebaseutil.FirebaseFirestoreHelper
+import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -23,15 +20,14 @@ import java.util.TimeZone
 class Registro : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegistroBinding
-    private val firebaseAuthHelper = FirebaseAuthHelper(FirebaseAuth.getInstance())
-    private val firestoreHelper = FirebaseFirestoreHelper(FirebaseFirestore.getInstance())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegistroBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
+        setContentView(binding.root)
         setupListeners()
+
     }
 
     private fun setupListeners() {
@@ -54,12 +50,13 @@ class Registro : AppCompatActivity() {
             editTextNombreCompleto.afterTextChanged {
                 validarCampos()
             }
-            editTextFechaNacimiento.afterTextChanged {
-                validarCampos()
-            }
             editTextEmail.afterTextChanged {
                 validarCampos()
             }
+            editTextFechaNacimiento.afterTextChanged {
+                validarCampos()
+            }
+
         }
     }
 
@@ -69,7 +66,7 @@ class Registro : AppCompatActivity() {
         val email = binding.editTextEmail.text.toString()
         val numeroTelefono = intent.getStringExtra("numeroTelefono")
         val fechaNacimiento = binding.editTextFechaNacimiento.text.toString()
-        val currentUser = firebaseAuthHelper.getCurrentUserId()
+        val currentUser = FirebaseUtils.getCurrentUserId()
 
         // Verificar la fecha de nacimiento
         val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
@@ -95,13 +92,13 @@ class Registro : AppCompatActivity() {
         fechaNacimiento: String,
         currentUser: String) {
         if (nombreUsuario.isNotEmpty() && nombreUsuario.isNotEmpty() && email.isNotEmpty() && fechaNacimiento.isNotEmpty()) {
-            firestoreHelper.obtenerColeccion("usuarios").whereEqualTo("nombreUsuario", nombreUsuario).get()
+            FirebaseUtils.getFirestoreInstance().collection("usuarios").whereEqualTo("nombreUsuario", nombreUsuario).get()
                 .addOnSuccessListener { nombreUsuarioSnapshot ->
                     if (!nombreUsuarioSnapshot.isEmpty) {
                         binding.inputNombreUsuario.error
                         binding.editTextNombreUsuario.error = "Este nombre de usuario ya está en uso"
                     } else {
-                        firestoreHelper.obtenerColeccion("usuarios").whereEqualTo("email", email).get()
+                        FirebaseUtils.getFirestoreInstance().collection("usuarios").whereEqualTo("email", email).get()
                             .addOnSuccessListener { emailSnapshot ->
                                 if (!emailSnapshot.isEmpty) {
                                     binding.editTextEmail.error = "Este correo electrónico ya está en uso"
@@ -113,13 +110,14 @@ class Registro : AppCompatActivity() {
                                         "uid" to currentUser,
                                         "imageUrl" to "")
 
-                                    firestoreHelper.obtenerColeccion("usuarios").document(currentUser).set(usuario).addOnSuccessListener {
-                                        Toast.makeText(applicationContext, "Documento agregado con ID: $usuario}", Toast.LENGTH_SHORT)
-                                            .show()
-                                        startActivity(Intent(this@Registro, MainActivity::class.java))
-                                    }.addOnFailureListener { e ->
-                                        Toast.makeText(applicationContext, "Error al agregar documento: $e", Toast.LENGTH_SHORT).show()
-                                    }
+                                    FirebaseUtils.getFirestoreInstance().collection("usuarios").document(currentUser).set(usuario)
+                                        .addOnSuccessListener {
+                                            //    Toast.makeText(applicationContext, "Documento agregado con ID: $usuario}", Toast.LENGTH_SHORT)
+                                            //        .show()
+                                            startActivity(Intent(this@Registro, MainActivity::class.java))
+                                        }.addOnFailureListener { e ->
+                                            Toast.makeText(applicationContext, "Error al agregar documento: $e", Toast.LENGTH_SHORT).show()
+                                        }
                                 }
                             }.addOnFailureListener { e ->
                                 Toast.makeText(applicationContext, "Error al verificar correo electrónico: $e", Toast.LENGTH_SHORT).show()

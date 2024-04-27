@@ -11,21 +11,21 @@
 
         <ImageView
             android:id="@+id/image_left"
-            android:layout_width="200dp"
+            android:layout_width="260dp"
             android:layout_height="200dp">
 
-        </ImageView>
+    </ImageView>
 
-        <TextView
-            android:id="@+id/text_view_time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="10dp"
-            android:hint="hora"
-            android:textSize="12sp" />
+    <TextView
+        android:id="@+id/text_view_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="10dp"
+        android:hint="hora"
+        android:textSize="12sp" />
 
 
-    </LinearLayout>
+</LinearLayout>
 
-</RelativeLayout>
+    </RelativeLayout>

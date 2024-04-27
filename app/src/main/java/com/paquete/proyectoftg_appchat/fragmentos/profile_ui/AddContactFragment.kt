@@ -1,6 +1,5 @@
 package com.paquete.proyectoftg_appchat.fragmentos.profile_ui
 
-import android.content.ContentProviderOperation
 import android.content.ContentUris
 import android.content.ContentValues
 import android.net.Uri
@@ -102,7 +101,6 @@ class AddContactFragment : Fragment() {
 
     private fun addOrUpdateContact(numero: String, nombre: String, email: String, editedContact: Contactos?) {
         val numeroFormateado = formatPhoneNumber(numero)
-        val operations = ArrayList<ContentProviderOperation>()
         editedContact?.id?.let { contactId ->
             // Si editedContact no es nulo, entonces estamos editando un contacto existente
 
@@ -182,9 +180,5 @@ class AddContactFragment : Fragment() {
                 requireContext().contentResolver.insert(ContactsContract.Data.CONTENT_URI, emailValues)
             }
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
     }
 }

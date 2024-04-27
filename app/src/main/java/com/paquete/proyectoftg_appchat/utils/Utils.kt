@@ -39,8 +39,7 @@ class Utils {
         }
 
 
-
-         fun updateUserStatusOffline() {
+        fun updateUserStatusOffline() {
             val userId = FirebaseUtils.getCurrentUserId()
             val currentTime = Calendar.getInstance().time
 
@@ -50,15 +49,13 @@ class Utils {
 
                 val userData = hashMapOf(
                     "estado" to "offline",
-                    "ultimaConexion" to currentTime
+                    "ultimaConexion" to currentTime,
                 )
 
 
-                userRef.update(userData as Map<String, Any>)
-                    .addOnSuccessListener {
+                userRef.update(userData as Map<String, Any>).addOnSuccessListener {
                         Log.d("Estado", "Estado de usuario actualizado a offline")
-                    }
-                    .addOnFailureListener { e ->
+                    }.addOnFailureListener { e ->
                         Log.e("Error", "Error al actualizar el estado del usuario a offline", e)
                     }
             }

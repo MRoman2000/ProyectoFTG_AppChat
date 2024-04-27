@@ -27,7 +27,6 @@ import java.util.Locale
 
 class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
     private val elementosViewModel: ElementosViewModel) : RecyclerView.Adapter<ChannelAdapter.ChannelViewHolder>() {
-
     private var userList: List<DataUser> = emptyList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
@@ -48,7 +47,6 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
     fun actualizarUsuarios(usuarios: List<DataUser>) {
         userList = usuarios
         notifyDataSetChanged() // Notifica al adaptador de que los datos han cambiado
-        Log.d("UserList", "Tamaño de userList: ${userList.size}") // Agrega un registro para verificar el tamaño de userList
     }
 
 
@@ -91,10 +89,11 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
                 val nombreRemitente = usuario?.nombre ?: otherUserModel?.telefono ?: numero
 
                 // Verificar si se obtuvieron datos del usuario de Firebase
+
+                val channelId = chatRoom.chatroomId
+                val participants = chatRoom.userIds
+                val recipientId = participants?.firstOrNull { it != FirebaseAuth.getInstance().currentUser?.uid }
                 if (otherUserModel != null) {
-                    val channelId = chatRoom.chatroomId
-                    val participants = chatRoom.userIds
-                    val recipientId = participants?.firstOrNull { it != FirebaseAuth.getInstance().currentUser?.uid }
                     val elemento = DataUser(uid = otherUserModel.uid,
                         email = otherUserModel.email,
                         nombreCompleto = nombreRemitente,
@@ -106,18 +105,19 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
                     binding.textViewUser.text = nombreRemitente
                     Glide.with(binding.root.context).load(otherUserModel.imageUrl).apply(RequestOptions.circleCropTransform())
                         .into(binding.imagenPerfil.imageView)
+                    Log.d("chat", "$channelId")
 
-                    itemView.setOnClickListener {
-                        val profileFragment = MessageFragment()
-                        val bundle = Bundle().apply {
-                            putParcelable("dataUser", otherUserModel)
-                            putString("channelId", channelId)
-                            putString("recipientId", recipientId)
-                            putString("nombreRemitente", nombreRemitente)
-                        }
-                        profileFragment.arguments = bundle
-                        Utils.navigateToFragment(itemView.context as FragmentActivity, profileFragment)
+                }
+                itemView.setOnClickListener {
+                    val enviarMessage = MessageFragment()
+                    val bundle = Bundle().apply {
+                        putParcelable("dataUser", otherUserModel)
+                        putString("channelId", channelId)
+                        putString("recipientId", recipientId)
+                        putString("nombreRemitente", nombreRemitente)
                     }
+                    enviarMessage.arguments = bundle
+                    Utils.navigateToFragment(itemView.context as FragmentActivity, enviarMessage)
                 }
             }
         }
@@ -137,10 +137,6 @@ class ChannelAdapter(private val messageList: ArrayList<ChatRoom>,
                         .into(binding.imagenPerfil.imageView)
                 }
             }
-
         }
-
     }
-
-
 }

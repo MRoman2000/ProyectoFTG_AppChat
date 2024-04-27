@@ -22,6 +22,10 @@ interface DatosDao {
     @Query("UPDATE DataUser SET imageUrl = :imageUrl WHERE uid = :uid")
     suspend fun updateUserImageUrl(uid: String, imageUrl: String)
 
+    @Query("UPDATE DataUser SET nombreUsuario = :nombreUsuario, nombreCompleto = :nombreCompleto, email = :email WHERE uid = :uid")
+    suspend fun updateInfo(uid: String, nombreUsuario: String, nombreCompleto: String, email : String)
+
+
     @Query("SELECT * FROM DataUser WHERE uid = :uid")
     suspend fun getDataUser(uid: String): DataUser?
 

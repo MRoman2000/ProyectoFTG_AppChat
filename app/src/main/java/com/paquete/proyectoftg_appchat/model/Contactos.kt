@@ -14,7 +14,7 @@ data class Contactos(
     var nombre: String?,
     var numero: String?,
     var email: String?,
-    var registradoEnFirestore: Boolean = false // Nuevo booleano para indicar si está registrado en Firestore
+    var registradoEnFirestore: Boolean = false
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString(),

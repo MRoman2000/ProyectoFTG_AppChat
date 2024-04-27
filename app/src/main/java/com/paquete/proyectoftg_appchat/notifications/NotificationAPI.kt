@@ -1,7 +1,7 @@
-package com.paquete.proyectoftg_appchat.actividades.notifications
+package com.paquete.proyectoftg_appchat.notifications
 
-import com.paquete.proyectoftg_appchat.actividades.notifications.Constants.Companion.CONTENT_TYPE
-import com.paquete.proyectoftg_appchat.actividades.notifications.Constants.Companion.SERVER_KEY
+import com.paquete.proyectoftg_appchat.notifications.Constants.Companion.CONTENT_TYPE
+import com.paquete.proyectoftg_appchat.notifications.Constants.Companion.SERVER_KEY
 import okhttp3.ResponseBody
 import retrofit2.Response
 

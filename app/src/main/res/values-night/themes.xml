@@ -30,7 +30,7 @@
     </style>
 
     <style name="ThemeOverlay.App.BottomNavigationView" parent="">
-        <item name="colorSecondaryContainer">@color/dark_secondary_blue</item>
+        <item name="colorSecondaryContainer">@color/my_primary_container</item>
         <item name="colorSurfaceContainer">@color/dark_primary_blue</item>
         <item name="colorOnSurfaceVariant">@color/white</item>
     </style>

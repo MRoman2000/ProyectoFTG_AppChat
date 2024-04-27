@@ -1,5 +1,6 @@
 package com.paquete.proyectoftg_appchat.actividades
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -82,7 +83,8 @@ class NumeroVertificacion : AppCompatActivity() {
 
 
     private fun startResendTimer() {
-        object : CountDownTimer(20000, 1000) {
+        object : CountDownTimer(60000, 1000) {
+            @SuppressLint("SetTextI18n")
             override fun onTick(millisUntilFinished: Long) {
                 val segundosRestantes = millisUntilFinished / 1000
                 binding.resentOTP.text = "Reenviar código de verificación en $segundosRestantes segundos"
@@ -139,7 +141,7 @@ class NumeroVertificacion : AppCompatActivity() {
                     progressBar(false)
                 }
 
-                override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+                override fun onCodeSent(verificationId: String, token: ForceResendingToken) {
                     storedVerificationId = verificationId
                     resendToken = token
                     Toast.makeText(applicationContext, "Código de verificación enviado", Toast.LENGTH_SHORT).show()

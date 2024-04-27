@@ -1,6 +1,5 @@
 package com.paquete.proyectoftg_appchat.fragmentos
 
-import android.content.ContentValues.TAG
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -9,6 +8,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -36,6 +36,8 @@ class ChatRoomFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         (requireActivity() as AppCompatActivity).supportActionBar?.title = "Chats"
         (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
+
+
         chatRoomList = ArrayList()
         setupRecyclerView()
         observeUsuarios()
@@ -47,6 +49,7 @@ class ChatRoomFragment : Fragment() {
         binding.recyclerViewChat.apply {
             adapter = channelAdapter
             layoutManager = LinearLayoutManager(requireContext())
+            binding.recyclerViewChat.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
         }
     }
 
@@ -65,7 +68,7 @@ class ChatRoomFragment : Fragment() {
         val chatroomsCollectionRef = FirebaseFirestore.getInstance().collection("chats")
         chatroomsCollectionRef.whereArrayContains("userIds", currentUserUid).addSnapshotListener { snapshot, exception ->
             if (exception != null) {
-                Log.e(TAG, "Error fetching chatrooms: $exception")
+                Log.e("Error", "Error fetching chatrooms: $exception")
                 return@addSnapshotListener
             }
 

@@ -1,11 +1,14 @@
 package com.paquete.proyectoftg_appchat.utils
 
+import android.content.ContentValues
+import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 
@@ -24,6 +27,16 @@ class FirebaseUtils {
 
         fun getCurrentUserId(): String? {
             return firebaseAuth.value.currentUser?.uid
+        }
+
+        fun deleteTokenFCM() {
+            FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(ContentValues.TAG, "Token FCM eliminado con éxito")
+                } else {
+                    Log.e(ContentValues.TAG, "Error al eliminar el token FCM", task.exception)
+                }
+            }
         }
 
         fun getOtrosUser(userId: List<String?>?): DocumentReference? {

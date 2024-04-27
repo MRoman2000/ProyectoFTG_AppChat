@@ -51,32 +51,41 @@ class MostrarDatosContactoFragment : Fragment() {
                 .addOnSuccessListener { nombreUsuarioSnapshot ->
                     if (!nombreUsuarioSnapshot.isEmpty) {
                         val contactos = elementosViewModel.contactoSelecionado().value
-                        if (contactos != null)  {
+                        if (contactos != null) {
                             val uidUsuario = nombreUsuarioSnapshot.documents.first().id
                             val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
-                            Log.d("Daotos","$userData , $uidUsuario")
+                            Log.d("Datos1", "$userData , $uidUsuario")
                             if (currentUserUid == uidUsuario) {
-                                // El usuario intenta enviarse un mensaje a sí mismo
                                 Utils.showMessage(requireContext(), "No puedes enviarte un mensaje a ti mismo")
                             } else {
-                                // El usuario intenta enviar un mensaje a otro usuario
                                 val channelId = generateChannelId(currentUserUid!!, uidUsuario)
-                                elementosViewModel.obtenerDatosUsuario(uidUsuario).observe(viewLifecycleOwner) { datauser ->
-                                    datauser?.let {
-                                        userData = datauser
-                                        val nombreRemitente = contactos.nombre.toString()
-                                        Log.d("Daotos", nombreRemitente)
-                                        val profileFragment = MessageFragment()
-                                        val bundle = Bundle().apply {
-                                            putParcelable("dataUser", userData)
-                                            putString("channelId", channelId)
-                                            putString("recipientId", uidUsuario)
-                                            putString("nombreRemitente", nombreRemitente)
-                                            Log.d("Daotos","$userData , $channelId , $uidUsuario, $nombreRemitente")
-                                        }
-                                        profileFragment.arguments = bundle
-                                        Utils.navigateToFragment(requireActivity(), profileFragment)
+                                Log.d("Datos2", "$currentUserUid , $uidUsuario")
+
+                                val otherUserModel = nombreUsuarioSnapshot.documents.first().toObject(DataUser::class.java)
+                                if (otherUserModel != null) {
+                                    val nombreRemitente = contactos.nombre.toString()
+                                    val elemento = DataUser(
+                                        uid = otherUserModel.uid,
+                                        email = otherUserModel.email,
+                                        nombreCompleto = otherUserModel.nombreCompleto,
+                                        nombreUsuario = otherUserModel.nombreUsuario,
+                                        telefono = otherUserModel.telefono,
+                                        imageUrl = otherUserModel.imageUrl
+                                    )
+                                    elementosViewModel.insertar(elemento)
+
+                                    val profileFragment = MessageFragment()
+                                    val bundle = Bundle().apply {
+                                        putParcelable("dataUser", elemento)
+                                        putString("channelId", channelId)
+                                        putString("recipientId", uidUsuario)
+                                        putString("nombreRemitente", nombreRemitente)
                                     }
+                                    profileFragment.arguments = bundle
+                                    Utils.navigateToFragment(requireActivity(), profileFragment)
+                                } else {
+                                    Log.e("Error", "No se pudo obtener los datos del usuario")
+                                    Utils.showMessage(requireContext(), "Error al obtener datos del usuario")
                                 }
                             }
                         } else {
@@ -91,9 +100,11 @@ class MostrarDatosContactoFragment : Fragment() {
                 }
         }
 
+
+
+
+
         binding.layoutDeleteContact.setOnClickListener {
-
-
             MaterialAlertDialogBuilder(requireContext()).apply {
                 setTitle("¿Deseas borrar el contacto?")
                 setMessage("¿Estás seguro de que quieres eliminar contacto?")

@@ -23,8 +23,8 @@ import com.paquete.proyectoftg_appchat.fragmentos.ConfiguracionFragment
 import com.paquete.proyectoftg_appchat.fragmentos.ContactosFragment
 import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
+import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import com.paquete.proyectoftg_appchat.utils.PermissionManager
-import com.paquete.proyectoftg_appchat.utils.PermissionManager.requestContactPermissions
 import com.paquete.proyectoftg_appchat.utils.UserStatusService
 import com.paquete.proyectoftg_appchat.utils.Utils
 import kotlinx.coroutines.Dispatchers
@@ -35,12 +35,13 @@ import kotlinx.coroutines.withContext
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var elementosViewModel: ElementosViewModel
-
+    private var permissionHandler = PermissionManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
+        val permissionHandler = PermissionManager()
         val view = binding.root
         setContentView(view)
 
@@ -60,6 +61,7 @@ class MainActivity : AppCompatActivity() {
             ContextCompat.getColor(this, R.color.my_primary_fixed)
         }
         window.statusBarColor = statusBarColor
+
         setSupportActionBar(binding.materialToolbar)
 
         elementosViewModel = ViewModelProvider(this)[ElementosViewModel::class.java]
@@ -67,19 +69,24 @@ class MainActivity : AppCompatActivity() {
         val contactos = ContactosFragment()
         val configuracion = ConfiguracionFragment()
 
-        requestContactPermissions(this)
-        askNotificationPermission()
+
+        permissionHandler.requestContactPermissions(this)
+
+
         lifecycleScope.launch {
             addNewItem()
         }
 
+
+        askNotificationPermission()
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val token = task.result
                 // Guardar el token FCM en Firestore
                 guardarTokenFCM(token)
+                Log.e("FCM", "$token")
             } else {
-                Log.e(TAG, "Error al obtener el token FCM", task.exception)
+                Log.e("FCM", "Error al obtener el token FCM", task.exception)
             }
         }
 
@@ -89,8 +96,6 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.beginTransaction().replace(R.id.main_frame_layout, chatFragment).commit()
             binding.bottomNavigation.selectedItemId = R.id.Chat
         }
-
-
 
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -116,14 +121,16 @@ class MainActivity : AppCompatActivity() {
         onBackPressedDispatcher.onBackPressed()
         return true
     }
-    
+
+
     private fun askNotificationPermission() {
+        Log.d("DEBUG", "askNotificationPermission() called")
         // Verificar si ya se han concedido los permisos
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            Log.d("DEBUG", "WAKE_LOCK permission already granted")
             // Permisos ya concedidos
-            // Aquí puedes realizar cualquier acción necesaria si los permisos ya están otorgados
-
         } else if (shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)) {
+            Log.d("DEBUG", "Requesting WAKE_LOCK permission")
             // Solicitar permisos
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -150,14 +157,12 @@ class MainActivity : AppCompatActivity() {
     private fun guardarTokenFCM(token: String?) {
         // Verificar si el token no es nulo
         token?.let { fcmToken ->
-            val firestore = FirebaseFirestore.getInstance()
-            val usuarioActual = FirebaseAuth.getInstance().currentUser
+            val usuarioActual = FirebaseAuth.getInstance().currentUser?.uid
             Log.d("user", "$usuarioActual")
             usuarioActual?.let { user ->
-                val uidUsuarioActual = user.uid
-                // Actualizar el token FCM en el documento del usuario en Firestore
-                val usuarioRef = firestore.collection("usuarios").document(uidUsuarioActual)
-                usuarioRef.update("fcmToken", fcmToken).addOnSuccessListener {
+                val usuarioRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(usuarioActual)
+                val tokenUpdate = hashMapOf<String, Any>("fcmToken" to fcmToken)
+                usuarioRef.update(tokenUpdate).addOnSuccessListener {
                     Log.d("Token", "Token FCM guardado en Firestore")
                 }.addOnFailureListener { e ->
                     Log.e(TAG, "Error al guardar el token FCM en Firestore", e)
@@ -206,12 +211,11 @@ class MainActivity : AppCompatActivity() {
         stopService(Intent(this, UserStatusService::class.java))
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        PermissionManager.handlePermissionsResult(requestCode, grantResults)
+        permissionHandler.handlePermissionsResult(this, requestCode, grantResults)
     }
-
-
 }
+
 
 

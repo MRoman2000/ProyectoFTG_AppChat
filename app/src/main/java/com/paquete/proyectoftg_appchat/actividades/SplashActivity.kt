@@ -1,20 +1,17 @@
 package com.paquete.proyectoftg_appchat.actividades
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.paquete.proyectoftg_appchat.R
-import com.paquete.proyectoftg_appchat.firebaseutil.FirebaseAuthHelper
+import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 
-@SuppressLint("CustomSplashScreen")
+
 class SplashActivity : AppCompatActivity() {
-    private val firebaseAuthHelper = FirebaseAuthHelper(FirebaseAuth.getInstance())
     private val PREFS_KEY_THEME = "theme_preference"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,7 +34,7 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun verificarAutenticacion() {
-        val currentUser = firebaseAuthHelper.getCurrentUserId()
+        val currentUser = FirebaseUtils.getCurrentUserId()
         if (currentUser != null) {
             val firebase = FirebaseFirestore.getInstance()
             firebase.collection("usuarios").whereEqualTo("uid", currentUser).get().addOnSuccessListener { documents ->

@@ -1,10 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="15dp"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    android:orientation="vertical"
     tools:context=".fragmentos.profile_ui.SecurityFragment">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/input_nombre_usuario"
+        style="@style/Widget.Material3.TextInputEditText.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="30dp"
+        android:padding="0dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_text_nombre_usuario"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="Nombre de usuario"
+            android:imeOptions="actionNext"
+            android:importantForAutofill="no"
+            android:inputType="textPersonName"
+            android:nextFocusForward="@id/edit_text_email"
+            android:textSize="16sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/input_nombre_completo"
+        style="@style/Widget.Material3.TextInputEditText.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="40dp"
+        android:padding="0dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_text_nombre_completo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="Nombre completo"
+
+            android:imeOptions="actionNext"
+            android:importantForAutofill="no"
+            android:inputType="textEmailAddress"
+            android:nextFocusForward="@id/edit_text_nombre_usuario"
+            android:textSize="16sp"
+            app:counterMaxLength="30" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/input_email"
+        style="@style/Widget.Material3.TextInputEditText.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="30dp"
+        android:padding="0dp"
+
+        app:endIconCheckable="false">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_text_email"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="30dp"
+            android:hint="@string/email"
+            android:inputType="textEmailAddress"
+            android:nextFocusForward="@id/edit_text_fecha_nacimiento" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+
+    <RelativeLayout
+        android:layout_marginTop="20dp"
+        android:id="@+id/layout_actualizar_datos"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/round_configuracion"
+        android:clipToOutline="true"
+        android:focusable="true"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:padding="12dp">
+
+
+        <TextView
+            android:id="@+id/btn_actualizar_datos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="Actualizar Datos"
+            android:textAlignment="center" />
+    </RelativeLayout>
+
 
     <RelativeLayout
         android:id="@+id/layout_delete_account"
@@ -17,6 +107,7 @@
         android:foreground="?android:attr/selectableItemBackground"
         android:padding="12dp">
 
+
         <TextView
             android:id="@+id/texto_Logout"
             android:layout_width="match_parent"
@@ -27,4 +118,4 @@
             android:textColor="@color/rojo" />
     </RelativeLayout>
 
-</FrameLayout>
+</LinearLayout>

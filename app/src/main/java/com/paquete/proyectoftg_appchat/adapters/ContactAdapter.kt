@@ -34,9 +34,8 @@ class ContactAdapter(private val context: Context,
     }
 
     override fun getItemCount(): Int {
-        return contactos.size ?: 0
+        return contactos.size
     }
-
 
     inner class ElementoViewHolder(private val binding: ViewholderContactosBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(contacto: Contactos) {

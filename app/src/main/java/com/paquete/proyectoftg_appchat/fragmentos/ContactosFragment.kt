@@ -73,7 +73,6 @@ class ContactosFragment : Fragment() {
             }
         }).attachToRecyclerView(binding.recyclerView)
 
-        // Aquí movemos la llamada a requestContactPermissions() después de la inicialización de requestPermissionLauncher
         requestContactPermissions()
     }
 
@@ -92,16 +91,13 @@ class ContactosFragment : Fragment() {
                     contactosRegistrados.add(it)
                 }
             }
-
             // Asignar la información de registro a los contactos
             contactosDispositivo.forEach { contacto ->
                 contacto.registradoEnFirestore = contactosRegistrados.contains(contacto.numero)
             }
-
             // Establecer la lista de contactos en el adaptador
             elementosAdapter.establecerListaContactos(contactosDispositivo)
 
-            // Resto del código para configurar la búsqueda y RecyclerView...
         }.addOnFailureListener { exception ->
             Log.e(TAG, "Error getting documents: ", exception)
             // Manejar el error

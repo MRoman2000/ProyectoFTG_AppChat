@@ -17,8 +17,8 @@
             android:layout_gravity="center_vertical"
             android:layout_margin="2dp"
             android:background="@drawable/round_configuracion"
-            android:backgroundTint="@color/blue"
-            android:padding="9dp"
+            android:backgroundTint="@color/my_primary_container"
+            android:padding="11dp"
             android:text="Prueba"
             android:textColor="@color/white"
             android:textSize="16sp" />

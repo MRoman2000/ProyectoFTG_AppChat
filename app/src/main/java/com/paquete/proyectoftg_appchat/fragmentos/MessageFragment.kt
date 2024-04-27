@@ -1,6 +1,7 @@
 package com.paquete.proyectoftg_appchat.fragmentos
 
 
+import android.annotation.SuppressLint
 import android.content.ContentValues.TAG
 import android.net.Uri
 import android.os.Build
@@ -30,14 +31,14 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
 import com.paquete.proyectoftg_appchat.R
-import com.paquete.proyectoftg_appchat.actividades.notifications.NotificationData
-import com.paquete.proyectoftg_appchat.actividades.notifications.PushNotification
-import com.paquete.proyectoftg_appchat.actividades.notifications.RetrofitInstance
 import com.paquete.proyectoftg_appchat.adapters.MessageAdapter
 import com.paquete.proyectoftg_appchat.databinding.FragmentMessageBinding
 import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.ProfileFragment
 import com.paquete.proyectoftg_appchat.model.DataUser
 import com.paquete.proyectoftg_appchat.model.Message
+import com.paquete.proyectoftg_appchat.notifications.NotificationData
+import com.paquete.proyectoftg_appchat.notifications.PushNotification
+import com.paquete.proyectoftg_appchat.notifications.RetrofitInstance
 import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import com.paquete.proyectoftg_appchat.utils.Utils
@@ -57,7 +58,7 @@ class MessageFragment : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var messageList: ArrayList<Message>
-    private lateinit var mDbRef: FirebaseFirestore
+    private lateinit var firestore: FirebaseFirestore
     private lateinit var linearLayoutManager: LinearLayoutManager
     private val elementosViewModel by lazy {
         ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
@@ -75,22 +76,15 @@ class MessageFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        // Infla tu vista personalizada en la barra de herramientas
         val materialToolbar = requireActivity().findViewById<MaterialToolbar>(R.id.materialToolbar)
-
-        // Infla tu vista personalizada en el MaterialToolbar
         val inflater = LayoutInflater.from(requireContext())
         val customToolbarView = inflater.inflate(R.layout.custom_toolbar_view, materialToolbar, false)
-
-        // Añade tu vista personalizada al MaterialToolbar
         materialToolbar.addView(customToolbarView)
 
-        // Obtiene las referencias a los elementos en tu vista personalizada
         val profileImage: ImageView = customToolbarView.findViewById(R.id.image_profile)
         val usernameTextView: TextView = customToolbarView.findViewById(R.id.name_user_textView)
         val statusTextView: TextView = customToolbarView.findViewById(R.id.status_textView)
 
-        // Actualiza la información del usuario
         profileImage.setImageResource(R.drawable.ic_person)
         val userData = arguments?.getParcelable<DataUser>("dataUser")
         val channelId = arguments?.getString("channelId")
@@ -102,14 +96,11 @@ class MessageFragment : Fragment() {
 
         val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri != null) {
-                // Aquí puedes llamar a tu función sendMessage pasando la URI de la imagen
                 sendMessage(senderUid.toString(), recipientId.toString(), uri)
             }
         }
 
-
-
-        mDbRef = FirebaseFirestore.getInstance()
+        firestore = FirebaseFirestore.getInstance()
         messageList = ArrayList()
         messageAdapter = MessageAdapter(requireContext(), messageList)
 
@@ -122,12 +113,11 @@ class MessageFragment : Fragment() {
             Utils.navigateToFragment(requireActivity(), profileFragment)
         }
 
-        userData?.let {
-            usernameTextView.text = nombreRemitente.toString()
-            Glide.with(requireContext()).load(userData.imageUrl).apply(RequestOptions.circleCropTransform()).into(profileImage)
-            // Recupera y muestra el estado del usuario
-            fetchUserStatusRealTime(userData.uid, statusTextView)
-        }
+
+        usernameTextView.text = nombreRemitente.toString()
+        Glide.with(requireContext()).load(userData?.imageUrl).apply(RequestOptions.circleCropTransform()).into(profileImage)
+        // Recupera y muestra el estado del usuario
+        userData?.uid?.let { fetchUserStatusRealTime(it, statusTextView) }
         recuperarMensajes(channelId.toString())
 
 
@@ -171,7 +161,7 @@ class MessageFragment : Fragment() {
             return
         }
         linearLayoutManager = LinearLayoutManager(requireContext())
-        mDbRef.collection("chats").document(channelId).collection("messages").orderBy("timestamp", Query.Direction.ASCENDING)
+        firestore.collection("chats").document(channelId).collection("messages").orderBy("timestamp", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     Log.w(TAG, "Listen failed", e)
@@ -204,8 +194,6 @@ class MessageFragment : Fragment() {
         elementosViewModel.obtenerDatosYElementoUsuarioActual(FirebaseUtils.getCurrentUserId()).observe(viewLifecycleOwner) { datauser ->
             datauser?.let { user ->
                 val phoneNumber = datauser.telefono
-
-                // Luego, continuar con el envío del mensaje utilizando el número de teléfono recuperado
                 val userTask = FirebaseUtils.getFCMToken(recipientId)
 
                 userTask.addOnSuccessListener { documentSnapshot ->
@@ -278,10 +266,10 @@ class MessageFragment : Fragment() {
         // Guardar el mensaje en la colección de mensajes del chat
 
         val chatroomId = generateChatroomId(senderUid, recipientId)
-        val messageCollectionRef = mDbRef.collection("chats").document(chatroomId).collection("messages")
+        val messageCollectionRef = firestore.collection("chats").document(chatroomId).collection("messages")
         messageCollectionRef.add(messageObject)
             .addOnSuccessListener { // Mensaje guardado exitosamente, ahora actualiza el último mensaje y la hora en el chat
-                val chatRef = mDbRef.collection("chats").document(chatroomId)
+                val chatRef = firestore.collection("chats").document(chatroomId)
                 val lastMessageContent = if (messageObject.imageUrl != null) {
                     // Si hay una URL de imagen, indicar que se envió una imagen
                     "Imagen"
@@ -306,6 +294,7 @@ class MessageFragment : Fragment() {
     }
 
 
+    @SuppressLint("SetTextI18n")
     private fun fetchUserStatusRealTime(userId: String, statusTextView: TextView) {
         db.collection("usuarios").document(userId).addSnapshotListener { snapshot, exception ->
             if (exception != null) {

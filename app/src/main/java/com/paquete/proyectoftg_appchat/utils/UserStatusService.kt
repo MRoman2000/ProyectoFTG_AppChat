@@ -18,16 +18,15 @@ class UserStatusService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        updateUserStatusOffline() // Actualiza el estado del usuario cuando se destruye el servicio
+        updateUserStatusOffline()
     }
+
     private fun updateUserStatusOnline() {
         val userId = FirebaseUtils.getCurrentUserId()
         val userRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(userId!!)
-        userRef.update("estado", "online")
-            .addOnSuccessListener {
+        userRef.update("estado", "online").addOnSuccessListener {
                 Log.d(ContentValues.TAG, "Estado de usuario actualizado a online")
-            }
-            .addOnFailureListener { e ->
+            }.addOnFailureListener { e ->
                 Log.e(ContentValues.TAG, "Error al actualizar el estado del usuario a online", e)
             }
     }
@@ -35,11 +34,9 @@ class UserStatusService : Service() {
     private fun updateUserStatusOffline() {
         val userId = FirebaseUtils.getCurrentUserId()
         val userRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(userId!!)
-        userRef.update("estado", "offline")
-            .addOnSuccessListener {
+        userRef.update("estado", "offline").addOnSuccessListener {
                 Log.d(ContentValues.TAG, "Estado de usuario actualizado a offline")
-            }
-            .addOnFailureListener { e ->
+            }.addOnFailureListener { e ->
                 Log.e(ContentValues.TAG, "Error al actualizar el estado del usuario a offline", e)
             }
     }
