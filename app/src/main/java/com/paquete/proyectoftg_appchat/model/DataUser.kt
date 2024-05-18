@@ -9,14 +9,16 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "DataUser")
-data class DataUser(@PrimaryKey val uid: String,
+data class DataUser(
+    @PrimaryKey val uid: String,
     val email: String? = null,
     val nombreCompleto: String? = null,
     val nombreUsuario: String? = null,
     val telefono: String? = null,
     val imageUrl: String? = null,
     val fcmToken: String? = null,
-    val estado: String = "offline") : Parcelable {
+    val estado: String = "offline"
+) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString()!!,
         parcel.readString(),
@@ -25,9 +27,8 @@ data class DataUser(@PrimaryKey val uid: String,
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
-
-
-        )
+        parcel.readString()!!
+    )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(uid)
@@ -38,7 +39,6 @@ data class DataUser(@PrimaryKey val uid: String,
         parcel.writeString(imageUrl)
         parcel.writeString(fcmToken)
         parcel.writeString(estado)
-
     }
 
     override fun describeContents(): Int {
@@ -57,8 +57,6 @@ data class DataUser(@PrimaryKey val uid: String,
 
     constructor() : this("")
 }
-
-
 
 
 

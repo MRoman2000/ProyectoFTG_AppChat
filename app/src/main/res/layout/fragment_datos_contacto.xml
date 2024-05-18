@@ -3,10 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/round_background"
-    android:fitsSystemWindows="true"
     android:orientation="vertical">
-
-
 
 
     <androidx.core.widget.NestedScrollView
@@ -119,16 +116,16 @@
                 android:orientation="vertical"
                 android:padding="10dp">
 
-                <TextView
+                <com.google.android.material.textview.MaterialTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="Teléfono:"
+                    android:text="NombreUsuario:"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/edit_telefono"
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/textView_nombreUsuario"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
@@ -137,7 +134,6 @@
 
 
             </LinearLayout>
-
 
 
             <LinearLayout
@@ -172,7 +168,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/layout_edit_contact"
+                android:id="@+id/layout_add_contact"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="25dp"

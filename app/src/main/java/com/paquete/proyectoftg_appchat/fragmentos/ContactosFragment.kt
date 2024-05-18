@@ -1,10 +1,7 @@
 package com.paquete.proyectoftg_appchat.fragmentos
 
-import android.Manifest
 import android.content.ContentValues.TAG
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -12,193 +9,187 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
 import com.paquete.proyectoftg_appchat.R
 import com.paquete.proyectoftg_appchat.adapters.ContactAdapter
+import com.paquete.proyectoftg_appchat.data.ViewModel
 import com.paquete.proyectoftg_appchat.databinding.FragmentContactosBinding
-import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.AddContactFragment
 import com.paquete.proyectoftg_appchat.model.Contactos
-import com.paquete.proyectoftg_appchat.room.ElementosViewModel
-import com.paquete.proyectoftg_appchat.utils.Utils
+import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 
 
 class ContactosFragment : Fragment() {
-    private val elementosViewModel by lazy {
-        ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
+    private val viewModel by lazy {
+        ViewModelProvider(requireActivity())[ViewModel::class.java]
     }
-
+    private lateinit var adapter: ContactAdapter
+    private lateinit var adapterBuscar: ContactAdapter
     private var _binding: FragmentContactosBinding? = null
     private val binding get() = _binding!!
 
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentContactosBinding.inflate(inflater, container, false)
-        val view = binding.root
-        return view
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         (requireActivity() as AppCompatActivity).supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(false)
             hide()
         }
-        val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
-        binding.searchView.getEditText().onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) { // Ocultar el bottomNavigationView cuando la barra de búsqueda obtiene el foco
-                bottomNavigationView.visibility = View.GONE
 
-            } else { // Mostrar el bottomNavigationView cuando la barra de búsqueda pierde el foco
-                bottomNavigationView.visibility = View.VISIBLE
-                binding.searchView.text.clear()
-            }
-        }
-
-        ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN,
-            ItemTouchHelper.RIGHT or ItemTouchHelper.LEFT) {
-            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
-                return true
-            }
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val posicion = viewHolder.adapterPosition
-                // val dataUser: Contactos = elementosAdapter.obtenerElemento(posicion)
-                // elementosViewModel.eliminar(dataUser)
-            }
-        }).attachToRecyclerView(binding.recyclerView)
-
-        requestContactPermissions()
+        setupUI()
+        observeUsuarios()
+        loadContactos()
+        setupFirestoreListener()
     }
 
+    private fun setupUI() {
+        adapterBuscar = ContactAdapter(requireContext(), viewModel)
+        adapter = ContactAdapter(requireContext(), viewModel)
+        val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
+        binding.searchView.getEditText().onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            bottomNavigationView.visibility = if (hasFocus) View.GONE else View.VISIBLE
+            if (!hasFocus) binding.searchView.text.clear()
+        }
+    }
+
+    private fun observeUsuarios() {
+        adapter = ContactAdapter(requireContext(), viewModel)
+        binding.recyclerView.adapter = adapter
+        viewModel.contacto.observe(viewLifecycleOwner) { usuarios ->
+            adapter.establecerListaContactos(usuarios)
+        }
+    }
 
     private fun loadContactos() {
-        val elementosAdapter = ContactAdapter(requireContext(), elementosViewModel)
-        val contactosDispositivo = obtenerContactosDispositivo()
-
-        val firestore = FirebaseFirestore.getInstance()
-        val contactosRegistrados = mutableSetOf<String>() // Conjunto para almacenar números de teléfono de contactos registrados
-
-        firestore.collection("usuarios").get().addOnSuccessListener { result ->
-            for (document in result) {
-                val numeroTelefono = document.getString("telefono")
-                numeroTelefono?.let {
-                    contactosRegistrados.add(it)
+        viewModel.cargarContactos()
+        viewModel.contacto.observe(viewLifecycleOwner) { contactosDispositivo ->
+            if (contactosDispositivo.isNotEmpty()) {
+                adapter.establecerListaContactos(contactosDispositivo)
+      //          adapterBuscar.establecerListaContactos(contactosDispositivo)
+            } else {
+                obtenerContactosFirebase { contactosObtenidos ->
+                    adapter.establecerListaContactos(contactosObtenidos)
+                    adapterBuscar.establecerListaContactos(contactosDispositivo)
                 }
             }
-            // Asignar la información de registro a los contactos
-            contactosDispositivo.forEach { contacto ->
-                contacto.registradoEnFirestore = contactosRegistrados.contains(contacto.numero)
-            }
-            // Establecer la lista de contactos en el adaptador
-            elementosAdapter.establecerListaContactos(contactosDispositivo)
-
-        }.addOnFailureListener { exception ->
-            Log.e(TAG, "Error getting documents: ", exception)
-            // Manejar el error
         }
+        binding.recyclerView.adapter = adapter
+        binding.recyclerView.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
 
-        elementosAdapter.establecerListaContactos(contactosDispositivo)
-        Log.d("Contactos", "Cantidad de contactos: ${contactosDispositivo.size}")
-
-        val adapterBuscar = ContactAdapter(requireContext(), elementosViewModel)
         binding.recyclerViewBuscar.adapter = adapterBuscar
-        adapterBuscar.establecerListaContactos(emptyList())
+        binding.recyclerViewBuscar.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
 
         binding.searchView.getEditText().addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {}
-
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val searchText = s.toString().trim() // Eliminar espacios en blanco al inicio y al final
-                binding.searchBar.setText(searchText) // Inicializar una lista vacía de contactos filtrados
-                val contactosFiltrados = mutableListOf<Contactos>()
-
-                // Solo buscar si hay texto en el campo de búsqueda
-                if (searchText.isNotEmpty()) { // Filtrar los contactos que coincidan parcialmente con el texto de búsqueda
-                    val contactosCoincidentes = contactosDispositivo.filter {
-                        it.nombre!!.contains(searchText, ignoreCase = true)
-                    } // Agregar los contactos coincidentes a la lista de contactos filtrados
-                    contactosFiltrados.addAll(contactosCoincidentes)
+                val searchText = s.toString().trim()
+                if (searchText.isEmpty()) {
+                    adapterBuscar.establecerListaContactos(emptyList())
+                    return
                 }
-
-                // Actualizar el adaptador del RecyclerView de búsqueda con los contactos filtrados
-                adapterBuscar.establecerListaContactos(contactosFiltrados)
+                FirebaseUtils.getFirestoreInstance().collection("usuarios").whereEqualTo("nombreUsuario", searchText).get()
+                    .addOnSuccessListener { result ->
+                        val contactosFiltrados = mutableListOf<Contactos>()
+                        for (document in result) {
+                            val usuario = document.toObject(Contactos::class.java)
+                            contactosFiltrados.add(usuario)
+                        }
+                        adapterBuscar.establecerListaContactos(contactosFiltrados)
+                    }.addOnFailureListener { exception ->
+                        Log.e("erroUser", "Error al buscar usuario por nombre de usuario: ", exception)
+                    }
             }
         })
-        binding.recyclerView.adapter = elementosAdapter
-        binding.recyclerView.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
     }
 
-
-    private fun requestContactPermissions() {
-        when (PackageManager.PERMISSION_GRANTED) {
-            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CONTACTS) -> {
-                // Permission has already been granted
-                Log.d(TAG, "Contact permission is already granted")
-                // Load the contacts data
-                loadContactos()
-
-                binding.addContact.setOnClickListener {
-                    val agregarContacto = AddContactFragment()
-                    Utils.navigateToFragment(requireActivity(), agregarContacto)
-                }
-            }
-
-            else -> {
-                Utils.showMessage(requireContext(), "No hay permisos")
-            }
-        }
-    }
-
-    private fun obtenerContactosDispositivo(): MutableList<Contactos> {
+    private fun obtenerContactosDispositivo(onSuccess: (List<Contactos>) -> Unit) {
         val contactos = mutableListOf<Contactos>()
-        val numerosTelefonicos = mutableSetOf<String>() // Conjunto para almacenar números de teléfono únicos
-        val contentResolver = requireActivity().contentResolver
+        FirebaseAuth.getInstance().currentUser?.let { currentUser ->
+            FirebaseUtils.getFirestoreInstance().collection("usuarios").document(currentUser.uid).get()
+                .addOnSuccessListener { documentSnapshot ->
+                    if (documentSnapshot.exists()) {
+                        val listaContactos = documentSnapshot.get("contactos") as? List<*>
 
-        // Cursor para recuperar los números de teléfono
-        val phoneCursor = contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null)
+                        listaContactos?.let { contactosUIDs ->
+                            contactosUIDs.forEach { contactoUID ->
+                                val contactoRef =
+                                    FirebaseUtils.getFirestoreInstance().collection("usuarios").document(contactoUID.toString())
 
-        phoneCursor?.use { cursor ->
-            val idIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
-            val nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
-            val phoneNumberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                                contactoRef.get().addOnSuccessListener { contactoSnapshot ->
+                                    if (contactoSnapshot.exists()) {
+                                        val contacto = contactoSnapshot.toObject(Contactos::class.java)
+                                        contacto?.let {
+                                            contactos.add(it)
+                                            viewModel.insertarNuevoContacto(contacto)
+                                            adapter.establecerListaContactos(contactos)
+                                        }
+                                    }
+                                }
+                            }/* onSuccess(contactos)
+                            contactos.forEach { contacto ->
+                                viewModel.insertarNuevoContacto(contacto)
+                            } */
+                        }
+                    }
+                }
+        }
+    }
 
-            while (cursor.moveToNext()) {
-                val id = cursor.getString(idIndex)
-                val name = cursor.getString(nameIndex)
-                val phoneNumber = cursor.getString(phoneNumberIndex)
 
-                // Verificar si el número de teléfono ya ha sido agregado
-                if (numerosTelefonicos.add(phoneNumber)) {
-                    val contact = Contactos(id, name, phoneNumber, "")
-                    contactos.add(contact)
+    private fun setupFirestoreListener() {
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+        currentUserUid?.let { uid ->
+            val contactosRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(uid)
+            contactosRef.addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.w(TAG, "Listen failed", e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    val contacto = snapshot.toObject(Contactos::class.java)
+                    contacto?.let {
+                        // Aquí actualizas los datos del contacto en la base de datos local
+                        viewModel.actualizarContacto(contacto)
+                    }
+                } else {
+                    Log.d(TAG, "El documento no existe")
                 }
             }
         }
+    }
 
-        // Cursor para recuperar las direcciones de correo electrónico
-        val emailCursor = contentResolver.query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null)
-        emailCursor?.use { cursor ->
-            val idIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.CONTACT_ID)
-            val emailIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS)
-            while (cursor.moveToNext()) {
-                val id = cursor.getString(idIndex)
-                val email = cursor.getString(emailIndex)
-                // Buscar el contacto correspondiente en la lista y agregar el correo electrónico
-                val contacto = contactos.find { it.id == id }
-                contacto?.let {
-                    it.email = email
+    fun obtenerContactosFirebase(onSuccess: (List<Contactos>) -> Unit) {
+        val contactosRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(FirebaseUtils.getCurrentUserId().toString())
+
+        contactosRef.get().addOnSuccessListener { documentSnapshot ->
+            if (documentSnapshot.exists()) {
+                val listaContactos = documentSnapshot.get("contactos") as? List<String>
+
+                listaContactos?.forEach { contactoId ->
+                    val contactoRef = FirebaseUtils.getFirestoreInstance().collection("usuarios").document(contactoId)
+
+                    contactoRef.get().addOnSuccessListener { contactoSnapshot ->
+                        if (contactoSnapshot.exists()) {
+                            val contacto = contactoSnapshot.toObject(Contactos::class.java)
+                            contacto?.let {
+                                Log.d("contactos", contacto.toString())
+                                // Insertar el contacto en la base de datos local
+                                viewModel.insertarNuevoContacto(contacto)
+                            }
+                        }
+                    }
                 }
             }
         }
-        return contactos
     }
 
 
@@ -216,4 +207,3 @@ class ContactosFragment : Fragment() {
     }
 
 }
-

@@ -1,28 +1,32 @@
 package com.paquete.proyectoftg_appchat.fragmentos
 
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentValues.TAG
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
-import com.google.android.material.appbar.MaterialToolbar
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -32,107 +36,147 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
 import com.paquete.proyectoftg_appchat.R
 import com.paquete.proyectoftg_appchat.adapters.MessageAdapter
+import com.paquete.proyectoftg_appchat.data.ViewModel
 import com.paquete.proyectoftg_appchat.databinding.FragmentMessageBinding
+import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.MediaPickerBottomSheetFragment
 import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.ProfileFragment
 import com.paquete.proyectoftg_appchat.model.DataUser
-import com.paquete.proyectoftg_appchat.model.Message
+import com.paquete.proyectoftg_appchat.model.Mensaje
 import com.paquete.proyectoftg_appchat.notifications.NotificationData
 import com.paquete.proyectoftg_appchat.notifications.PushNotification
 import com.paquete.proyectoftg_appchat.notifications.RetrofitInstance
-import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import com.paquete.proyectoftg_appchat.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
 
-class MessageFragment : Fragment() {
+class MessageFragment : Fragment(), MediaPickerBottomSheetFragment.MediaPickerListener {
 
     private var _binding: FragmentMessageBinding? = null
     private val binding get() = _binding!!
     private val db = FirebaseFirestore.getInstance()
     private lateinit var messageAdapter: MessageAdapter
-    private lateinit var messageList: ArrayList<Message>
+    private lateinit var messageList: ArrayList<Mensaje>
     private lateinit var firestore: FirebaseFirestore
     private lateinit var linearLayoutManager: LinearLayoutManager
+    private lateinit var url: Uri
     private val elementosViewModel by lazy {
-        ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
+        ViewModelProvider(requireActivity())[ViewModel::class.java]
+    }
+    private lateinit var takePictureLauncher: ActivityResultLauncher<Uri>
+    private lateinit var pickMediaLauncher: ActivityResultLauncher<PickVisualMediaRequest>
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+        if (isGranted) {
+            takePictureLauncher.launch(url)
+        } else {
+            // El usuario denegó el permiso de cámara, muestra un mensaje o realiza alguna acción apropiada
+            Toast.makeText(requireContext(), "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
+        }
     }
 
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMessageBinding.inflate(inflater, container, false)
         val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
         bottomNavigationView.visibility = View.GONE
+        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+            //       setDisplayHomeAsUpEnabled(true)
+            hide()
+        }
         return binding.root
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        val materialToolbar = requireActivity().findViewById<MaterialToolbar>(R.id.materialToolbar)
-        val inflater = LayoutInflater.from(requireContext())
-        val customToolbarView = inflater.inflate(R.layout.custom_toolbar_view, materialToolbar, false)
-        materialToolbar.addView(customToolbarView)
 
-        val profileImage: ImageView = customToolbarView.findViewById(R.id.image_profile)
-        val usernameTextView: TextView = customToolbarView.findViewById(R.id.name_user_textView)
-        val statusTextView: TextView = customToolbarView.findViewById(R.id.status_textView)
-
-        profileImage.setImageResource(R.drawable.ic_person)
         val userData = arguments?.getParcelable<DataUser>("dataUser")
         val channelId = arguments?.getString("channelId")
         val recipientId = arguments?.getString("recipientId")
-        val nombreRemitente = arguments?.getString("nombreRemitente")
 
-
+        url = createImageUri()
         val senderUid = FirebaseAuth.getInstance().currentUser?.uid
-
-        val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) {
-                sendMessage(senderUid.toString(), recipientId.toString(), uri)
-            }
-        }
 
         firestore = FirebaseFirestore.getInstance()
         messageList = ArrayList()
         messageAdapter = MessageAdapter(requireContext(), messageList)
+        pickMediaLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                sendMessage(senderUid.toString(), recipientId.toString(), uri)
+            }
+        }
+        takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            // Aquí manejas el resultado de la captura de la imagen, por ejemplo, mostrando la imagen capturada
+            if (success) {
+                sendMessage(senderUid.toString(), recipientId.toString(), url)
+            } else {
 
-
-        profileImage.setOnClickListener {
-            val profileFragment = ProfileFragment()
-            val bundle = Bundle()
-            bundle.putParcelable("userData", userData)
-            profileFragment.arguments = bundle
-            Utils.navigateToFragment(requireActivity(), profileFragment)
+            }
         }
 
+        binding.btnBack.setOnClickListener {
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
 
-        usernameTextView.text = nombreRemitente.toString()
-        Glide.with(requireContext()).load(userData?.imageUrl).apply(RequestOptions.circleCropTransform()).into(profileImage)
-        // Recupera y muestra el estado del usuario
-        userData?.uid?.let { fetchUserStatusRealTime(it, statusTextView) }
+        binding.imageProfile.setOnClickListener {
+            if (isAdded) {
+                val profileFragment = ProfileFragment()
+                val bundle = Bundle()
+                bundle.putParcelable("dataUser", userData)
+                profileFragment.arguments = bundle
+                Utils.navigateToFragment(requireActivity(), profileFragment)
+            } else {
+                // Manejar el caso cuando el fragmento no está adjunto a la actividad
+                Log.e("MessageFragment", "Fragment not attached to activity")
+            }
+        }
+
+        elementosViewModel.obtenerDatosUsuarioActual(FirebaseUtils.getCurrentUserId())
+        binding.nameUserTextView.text = userData?.nombreCompleto ?: ""
+        Glide.with(requireContext()).load(userData?.imageUrl).apply(RequestOptions.circleCropTransform()).into(binding.imageProfile)
+        userData?.uid?.let { fetchUserStatusRealTime(it, binding.statusTextView) }
         recuperarMensajes(channelId.toString())
 
-
-
         binding.btnSendPhoto.setOnClickListener {
-            pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            val bottomSheetFragment = MediaPickerBottomSheetFragment()
+            bottomSheetFragment.setListener(this)
+            bottomSheetFragment.show(parentFragmentManager, bottomSheetFragment.tag)
         }
-
 
         binding.btnSendMessage.setOnClickListener {
             sendMessage(senderUid.toString(), recipientId.toString())
         }
 
+
     }
 
+    private fun createImageUri(): Uri {
+        // Obtenemos el directorio de archivos de la aplicación
+        val storageDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+
+        // Creamos un archivo temporal en el directorio de imágenes
+        val imageFile = File.createTempFile("temp_image", /* prefijo */
+            ".png", /* sufijo */
+            storageDir /* directorio */)
+
+        // Devolvemos el URI del archivo temporal utilizando FileProvider
+        return FileProvider.getUriForFile(requireContext(), "com.paquete.proyectoftg_appchat.fileprovider", imageFile)
+        // Crear un nombre único para el archivo de imagen
+        /*   val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val storageDir: File? = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val imageFileName = "JPEG_${timeStamp}_"
+            val imageFile = File.createTempFile(imageFileName, ".jpg", storageDir)
+
+            // Obtener la Uri del archivo de imagen
+            return FileProvider.getUriForFile(requireContext(), "com.paquete.proyectoftg_appchat.fileprovider", imageFile) */
+    }
 
     private fun formatDate(date: Date): String {
         val calendar = Calendar.getInstance()
@@ -156,12 +200,11 @@ class MessageFragment : Fragment() {
     }
 
     fun recuperarMensajes(channelId: String) {
-
         if (!isAdded) {
             return
         }
         linearLayoutManager = LinearLayoutManager(requireContext())
-        firestore.collection("chats").document(channelId).collection("messages").orderBy("timestamp", Query.Direction.ASCENDING)
+        firestore.collection("chats").document(channelId).collection("mensajes").orderBy("marcaDeTiempo", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     Log.w(TAG, "Listen failed", e)
@@ -169,7 +212,7 @@ class MessageFragment : Fragment() {
                 }
 
                 if (snapshot != null && !snapshot.isEmpty) {
-                    val newMessages = snapshot.toObjects(Message::class.java)
+                    val newMessages = snapshot.toObjects(Mensaje::class.java)
                     messageList.clear()
                     messageList.addAll(newMessages)
                     messageAdapter.notifyDataSetChanged()
@@ -183,68 +226,58 @@ class MessageFragment : Fragment() {
                     Log.d(TAG, "No messages")
                 }
             }
-
     }
 
 
     fun sendMessage(senderUid: String, recipientId: String, imageUri: Uri? = null) {
-        val message = binding.editTextMessege.text.toString().trim()
+        val mensaje = binding.editTextMessege.text.toString().trim()
+        elementosViewModel.dataUser.observe(viewLifecycleOwner) { dataUser ->
+            dataUser?.let { user ->
+                val nombreCompleto = user.nombreCompleto
 
-        // Recuperar el número de teléfono del usuario actual desde el almacenamiento local
-        elementosViewModel.obtenerDatosYElementoUsuarioActual(FirebaseUtils.getCurrentUserId()).observe(viewLifecycleOwner) { datauser ->
-            datauser?.let { user ->
-                val phoneNumber = datauser.telefono
-                val userTask = FirebaseUtils.getFCMToken(recipientId)
+                FirebaseUtils.getFCMToken(recipientId).addOnSuccessListener { documentSnapshot ->
+                    val userData = documentSnapshot.toObject(DataUser::class.java)
+                    val recipientToken = userData?.fcmToken
 
-                userTask.addOnSuccessListener { documentSnapshot ->
-                    if (documentSnapshot.exists()) {
-                        val userData = documentSnapshot.toObject(DataUser::class.java)
-                        val recipientToken = userData?.fcmToken
-                        Log.d("FCM", "$recipientToken")
-                        if (message.isNotEmpty() || imageUri != null) {
-                            val currentTime = Timestamp.now()
-
-                            if (imageUri != null) {
-                                val storageRef = FirebaseStorage.getInstance().reference.child("images/${UUID.randomUUID()}")
-                                storageRef.putFile(imageUri).addOnSuccessListener { taskSnapshot ->
-                                    storageRef.downloadUrl.addOnSuccessListener { uri ->
-                                        val imageUrl = uri.toString()
-                                        val messageObject = Message(message, senderUid, currentTime, imageUrl)
-                                        sendMessageToFirestore(senderUid, recipientId, messageObject)
-                                        if (recipientToken != null) {
-                                            PushNotification(NotificationData(phoneNumber.toString(), "imagen"), recipientToken).also {
-                                                sendNotification(it)
-                                            }
-                                        } else {
-                                            // El destinatario no tiene un token FCM registrado
-                                        }
-                                    }.addOnFailureListener { e ->
-                                        // Manejar errores al obtener la URL de la imagen
-                                    }
+                    if (mensaje.isNotEmpty() || imageUri != null) {
+                        val currentTime = Timestamp.now()
+                        if (imageUri != null) {
+                            val storageRef = FirebaseStorage.getInstance().reference.child("images/${UUID.randomUUID()}")
+                            storageRef.putFile(imageUri).addOnSuccessListener { taskSnapshot ->
+                                storageRef.downloadUrl.addOnSuccessListener { uri ->
+                                    val imageUrl = uri.toString()
+                                    val messageObject = Mensaje(mensaje, senderUid, currentTime, imageUrl)
+                                    sendMessageToFirestore(senderUid, recipientId, messageObject)
+                                    sendNotification(recipientToken, nombreCompleto.toString(), "imagen", senderUid)
                                 }.addOnFailureListener { e ->
-                                    // Manejar errores al cargar la imagen
+                                    // Manejar errores al obtener la URL de la imagen
                                 }
-                            } else {
-                                val messageObject = Message(message, senderUid, currentTime)
-                                sendMessageToFirestore(senderUid, recipientId, messageObject)
-                                if (recipientToken != null) {
-                                    PushNotification(NotificationData(phoneNumber.toString(), message), recipientToken).also {
-                                        sendNotification(it)
-                                    }
-                                } else {
-                                    // El destinatario no tiene un token FCM registrado
-                                }
+                            }.addOnFailureListener { e ->
+                                // Manejar errores al cargar la imagen
                             }
                         } else {
-                            Toast.makeText(context, "No puedes enviar un mensaje vacío", Toast.LENGTH_SHORT).show()
+                            val messageObject = Mensaje(mensaje, senderUid, currentTime)
+                            sendMessageToFirestore(senderUid, recipientId, messageObject)
+                            sendNotification(recipientToken, nombreCompleto.toString(), mensaje, senderUid)
+                            binding.editTextMessege.text = null
                         }
                     } else {
-                        // No se encontró el documento del usuario
+                        Toast.makeText(context, "No puedes enviar un mensaje vacío", Toast.LENGTH_SHORT).show()
                     }
                 }.addOnFailureListener { exception ->
                     // Manejar errores al obtener el token FCM
                 }
             }
+        }
+    }
+
+    private fun sendNotification(recipientToken: String?, nombreCompleto: String, message: String, senderUid: String) {
+        recipientToken?.let {
+            val notificationData = NotificationData(nombreCompleto, message, senderUid)
+            val pushNotification = PushNotification(notificationData, recipientToken)
+            sendNotification(pushNotification)
+        } ?: run {
+            // El destinatario no tiene un token FCM registrado
         }
     }
 
@@ -262,27 +295,24 @@ class MessageFragment : Fragment() {
         }
     }
 
-    private fun sendMessageToFirestore(senderUid: String, recipientId: String, messageObject: Message) {
-        // Guardar el mensaje en la colección de mensajes del chat
-
+    private fun sendMessageToFirestore(senderUid: String, recipientId: String, messageObject: Mensaje) {
         val chatroomId = generateChatroomId(senderUid, recipientId)
-        val messageCollectionRef = firestore.collection("chats").document(chatroomId).collection("messages")
+        val messageCollectionRef = firestore.collection("chats").document(chatroomId).collection("mensajes")
         messageCollectionRef.add(messageObject)
             .addOnSuccessListener { // Mensaje guardado exitosamente, ahora actualiza el último mensaje y la hora en el chat
                 val chatRef = firestore.collection("chats").document(chatroomId)
-                val lastMessageContent = if (messageObject.imageUrl != null) {
+                val lastMessageContent = if (messageObject.urlImagen != null) {
                     // Si hay una URL de imagen, indicar que se envió una imagen
                     "Imagen"
                 } else {
                     // Si no hay una URL de imagen, usar el contenido del mensaje
-                    messageObject.message ?: ""
+                    messageObject.mensaje ?: ""
                 }
-
                 val data = hashMapOf("userIds" to listOf(senderUid, recipientId),
                     "chatroomId" to chatroomId,
                     "lastMessage" to lastMessageContent,
                     "lastMessageSenderId" to senderUid,
-                    "lastMessageTimestamp" to messageObject.timestamp)
+                    "lastMessageTimestamp" to messageObject.marcaDeTiempo)
 
                 chatRef.set(data, SetOptions.merge()).addOnSuccessListener { // Chat actualizado exitosamente
                     binding.editTextMessege.text = null
@@ -346,10 +376,34 @@ class MessageFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        val materialToolbar = requireActivity().findViewById<MaterialToolbar>(R.id.materialToolbar)
+        (requireActivity() as AppCompatActivity).supportActionBar?.show()
+        //    val materialToolbar = requireActivity().findViewById<MaterialToolbar>(R.id.materialToolbarMain)
+        //   materialToolbar.removeViewAt(materialToolbar.childCount - 1)
         val bottomNavigationView = requireActivity().findViewById<View>(R.id.bottom_navigation)
         bottomNavigationView.visibility = View.VISIBLE
-        materialToolbar.removeViewAt(materialToolbar.childCount - 1)
+
     }
 
+    private fun requestCameraPermission(photoUri: Uri) {
+        try {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                // El permiso de cámara fue otorgado, puedes proceder a capturar la foto
+                takePictureLauncher.launch(photoUri)
+            } else {
+                // El permiso de cámara no ha sido otorgado, solicitar permiso
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override fun onCameraOptionClicked() {
+        // Solicitar permiso para acceder a la cámara y capturar la imagen
+        requestCameraPermission(url)
+    }
+
+    override fun onGalleryOptionClicked() {
+        pickMediaLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
 }

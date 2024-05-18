@@ -27,30 +27,23 @@
 
             <TextView
                 android:id="@+id/nombre"
-                android:textStyle="bold"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignBaseline="@+id/user_registrado"
+                android:layout_marginStart="5dp"
                 android:textSize="20sp"
+                android:textStyle="bold"
                 tools:text="nombre" />
 
             <TextView
-                android:id="@+id/textView_numero"
+                android:id="@+id/textView_nombreUsuario"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/nombre"
-                android:layout_marginTop="5dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="-1dp"
                 android:textSize="15sp"
-                tools:text="numero" />
+                tools:text="nombreUsuario" />
 
-            <ImageView
-                android:id="@+id/user_registrado"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerInParent="true"
-                android:layout_marginEnd="15dp"
-                android:src="@drawable/ic_check" />
 
         </RelativeLayout>
 

@@ -12,19 +12,20 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.paquete.proyectoftg_appchat.adapters.ChannelAdapter
+import com.paquete.proyectoftg_appchat.adapters.ChatRoomsAdapter
+import com.paquete.proyectoftg_appchat.data.ViewModel
 import com.paquete.proyectoftg_appchat.databinding.FragmentChatRoomBinding
 import com.paquete.proyectoftg_appchat.model.ChatRoom
-import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 
 
 class ChatRoomFragment : Fragment() {
-    private lateinit var channelAdapter: ChannelAdapter
+
+    private lateinit var chatRoomsAdapter: ChatRoomsAdapter
     private lateinit var chatRoomList: ArrayList<ChatRoom>
-    private var _binding: FragmentChatRoomBinding? = null
-    private val elementosViewModel by lazy {
-        ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
+    private val viewModel by lazy {
+        ViewModelProvider(requireActivity())[ViewModel::class.java]
     }
+    private var _binding: FragmentChatRoomBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -34,37 +35,40 @@ class ChatRoomFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (requireActivity() as AppCompatActivity).supportActionBar?.title = "Chats"
-        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
 
-
+        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(false)
+            title = "Chat"
+        }
+        
         chatRoomList = ArrayList()
-        setupRecyclerView()
         observeUsuarios()
-        fetchChatrooms()
+        cargarChatRoom()
+        setupRecyclerView()
+
     }
+
 
     private fun setupRecyclerView() {
-        channelAdapter = ChannelAdapter(chatRoomList, elementosViewModel)
+        chatRoomsAdapter = ChatRoomsAdapter(chatRoomList, viewModel)
         binding.recyclerViewChat.apply {
-            adapter = channelAdapter
+            adapter = chatRoomsAdapter
             layoutManager = LinearLayoutManager(requireContext())
             binding.recyclerViewChat.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
+            // Adjuntar ItemTouchHelper al RecyclerView
+            chatRoomsAdapter.itemTouchHelper.attachToRecyclerView(this)
         }
     }
-
     private fun observeUsuarios() {
-        elementosViewModel.cargarUsuarios()
-        elementosViewModel.usuarios.observe(viewLifecycleOwner) { usuarios ->
-            channelAdapter.actualizarUsuarios(usuarios)
+        viewModel.cargarUsuarios()
+        viewModel.usuarios.observe(viewLifecycleOwner) { usuarios ->
+            chatRoomsAdapter.actualizarUsuarios(usuarios)
         }
-
 
     }
 
-    private fun fetchChatrooms() {
+    private fun cargarChatRoom() {
         val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
         val chatroomsCollectionRef = FirebaseFirestore.getInstance().collection("chats")
         chatroomsCollectionRef.whereArrayContains("userIds", currentUserUid).addSnapshotListener { snapshot, exception ->
             if (exception != null) {
@@ -79,10 +83,11 @@ class ChatRoomFragment : Fragment() {
             chatrooms?.let {
                 chatRoomList.clear()
                 chatRoomList.addAll(it)
-                channelAdapter.notifyDataSetChanged()
+                chatRoomsAdapter.notifyDataSetChanged()
             }
         }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

@@ -1,11 +1,8 @@
 package com.paquete.proyectoftg_appchat.fragmentos
 
-import android.content.ContentResolver
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -14,12 +11,13 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
+import com.paquete.proyectoftg_appchat.data.ViewModel
 import com.paquete.proyectoftg_appchat.databinding.FragmentDatosContactoBinding
-import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.AddContactFragment
 import com.paquete.proyectoftg_appchat.model.DataUser
-import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
 import com.paquete.proyectoftg_appchat.utils.Utils
 
@@ -27,7 +25,9 @@ class MostrarDatosContactoFragment : Fragment() {
 
     private var _binding: FragmentDatosContactoBinding? = null
     private val binding get() = _binding!!
-    private lateinit var elementosViewModel: ElementosViewModel
+    private val elementosViewModel by lazy {
+        ViewModelProvider(requireActivity())[ViewModel::class.java]
+    }
     private var userData: DataUser? = null
 
 
@@ -43,53 +43,48 @@ class MostrarDatosContactoFragment : Fragment() {
             title = "Informacion de Contacto"
             setDisplayHomeAsUpEnabled(true)
         }
-        elementosViewModel = ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
 
         binding.layoutSendMenssage.setOnClickListener {
-            val telefono = binding.editTelefono.text.toString()
-            FirebaseUtils.getFirestoreInstance().collection("usuarios").whereEqualTo("telefono", telefono).get()
+
+            val contactos = elementosViewModel.contactoSelecionado().value
+            Log.d("Datos1", "$contactos")
+            //  val telefono = binding.editTelefono.text.toString()
+            FirebaseUtils.getFirestoreInstance().collection("usuarios").whereEqualTo("uid", contactos!!.uid).get()
                 .addOnSuccessListener { nombreUsuarioSnapshot ->
                     if (!nombreUsuarioSnapshot.isEmpty) {
-                        val contactos = elementosViewModel.contactoSelecionado().value
-                        if (contactos != null) {
-                            val uidUsuario = nombreUsuarioSnapshot.documents.first().id
-                            val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
-                            Log.d("Datos1", "$userData , $uidUsuario")
-                            if (currentUserUid == uidUsuario) {
-                                Utils.showMessage(requireContext(), "No puedes enviarte un mensaje a ti mismo")
-                            } else {
-                                val channelId = generateChannelId(currentUserUid!!, uidUsuario)
-                                Log.d("Datos2", "$currentUserUid , $uidUsuario")
-
-                                val otherUserModel = nombreUsuarioSnapshot.documents.first().toObject(DataUser::class.java)
-                                if (otherUserModel != null) {
-                                    val nombreRemitente = contactos.nombre.toString()
-                                    val elemento = DataUser(
-                                        uid = otherUserModel.uid,
-                                        email = otherUserModel.email,
-                                        nombreCompleto = otherUserModel.nombreCompleto,
-                                        nombreUsuario = otherUserModel.nombreUsuario,
-                                        telefono = otherUserModel.telefono,
-                                        imageUrl = otherUserModel.imageUrl
-                                    )
-                                    elementosViewModel.insertar(elemento)
-
-                                    val profileFragment = MessageFragment()
-                                    val bundle = Bundle().apply {
-                                        putParcelable("dataUser", elemento)
-                                        putString("channelId", channelId)
-                                        putString("recipientId", uidUsuario)
-                                        putString("nombreRemitente", nombreRemitente)
-                                    }
-                                    profileFragment.arguments = bundle
-                                    Utils.navigateToFragment(requireActivity(), profileFragment)
-                                } else {
-                                    Log.e("Error", "No se pudo obtener los datos del usuario")
-                                    Utils.showMessage(requireContext(), "Error al obtener datos del usuario")
-                                }
-                            }
+                        //       val contactos = elementosViewModel.contactoSelecionado().value
+                        val uidUsuario = nombreUsuarioSnapshot.documents.first().id
+                        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+                        Log.d("Datos2", "$userData , $uidUsuario")
+                        if (currentUserUid == uidUsuario) {
+                            Utils.showMessage(requireContext(), "No puedes enviarte un mensaje a ti mismo")
                         } else {
-                            Utils.showMessage(requireContext(), "Este contacto no está registrado en la aplicación")
+                            val channelId = generateChannelId(currentUserUid!!, uidUsuario)
+                            Log.d("Datos3", "$currentUserUid , $uidUsuario")
+
+                            val otherUserModel = nombreUsuarioSnapshot.documents.first().toObject(DataUser::class.java)
+                            if (otherUserModel != null) {
+                                val elemento = DataUser(uid = otherUserModel.uid,
+                                    email = otherUserModel.email,
+                                    nombreCompleto = otherUserModel.nombreCompleto,
+                                    nombreUsuario = otherUserModel.nombreUsuario,
+                                    telefono = otherUserModel.telefono,
+                                    imageUrl = otherUserModel.imageUrl)
+                                //    elementosViewModel.insertar(elemento)
+
+                                val profileFragment = MessageFragment()
+                                val bundle = Bundle().apply {
+                                    putParcelable("dataUser", elemento)
+                                    putString("channelId", channelId)
+                                    putString("recipientId", uidUsuario)
+
+                                }
+                                profileFragment.arguments = bundle
+                                Utils.navigateToFragment(requireActivity(), profileFragment)
+                            } else {
+                                Log.e("Error", "No se pudo obtener los datos del usuario")
+                                Utils.showMessage(requireContext(), "Error al obtener datos del usuario")
+                            }
                         }
                     } else {
                         Utils.showMessage(requireContext(), "Este contacto no está registrado en la aplicación")
@@ -100,39 +95,42 @@ class MostrarDatosContactoFragment : Fragment() {
                 }
         }
 
-
-
-
-
         binding.layoutDeleteContact.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext()).apply {
                 setTitle("¿Deseas borrar el contacto?")
-                setMessage("¿Estás seguro de que quieres eliminar contacto?")
+                setMessage("¿Estás seguro de que quieres eliminar el contacto?")
                 setPositiveButton("Borrar") { _, _ ->
-                    deleteContact()
+                    // Obtener el contacto seleccionado
+                    val contacto = elementosViewModel.contactoSeleccionado.value
+
+                    // Verificar si el contacto seleccionado no es nulo
+                    contacto?.let { contactToDelete ->
+                        // Llamar al método para eliminar el contacto por su UID
+                        elementosViewModel.eliminarContactoPorUID(contactToDelete.uid)
+                        Utils.modificarContactoEnListaDeContactos(contactToDelete.uid, false)
+                        // Mostrar un mensaje de éxito
+                        Toast.makeText(requireContext(), "Contacto eliminado correctamente", Toast.LENGTH_SHORT).show()
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    }
                 }
                 setNegativeButton("Cancelar") { _, _ -> }
             }.show()
         }
 
-
-        binding.layoutEditContact.setOnClickListener {
-            // Crear un nuevo fragmento de edición
-            val editContactFragment = AddContactFragment()
-            // Obtener el contacto que se va a editar
-            val contactToEdit = elementosViewModel.contactoSeleccionado.value
-            // Crear un Bundle para pasar la información del contacto al fragmento de edición
-            val bundle = Bundle().apply {
-                putParcelable("editedContact", contactToEdit)
+        binding.layoutAddContact.setOnClickListener {
+            val contacto = elementosViewModel.contactoSeleccionado.value
+            // Verificar si el contacto seleccionado no es nulo
+            contacto?.let { contactToDelete ->
+                // Llamar al método para eliminar el contacto por su UID
+                elementosViewModel.insertarNuevoContacto(contactToDelete)
+                Utils.modificarContactoEnListaDeContactos(contactToDelete.uid, true)
+                // Mostrar un mensaje de éxito
+                Toast.makeText(requireContext(), "Contacto añadido correctamente", Toast.LENGTH_SHORT).show()
             }
-            // Establecer el Bundle como argumento del fragmento de edición
-            editContactFragment.arguments = bundle
-            // Navegar al fragmento de edición
-            Utils.navigateToFragment(requireActivity(), editContactFragment)
         }
 
 
-        // Observar los cambios en el ViewModel y actualizar la UI
+        // Observar los cambios en el ViewModel.kt y actualizar la UI
         /*    elementosViewModel.seleccionado().observe(viewLifecycleOwner) { serie -> // Verificar si la serie no es nula
                 serie?.let { // Cargar la imagen utilizando Glide y aplicar redondeo a las esquinas
                     Glide.with(requireContext()).load(serie.url_image_perfile)
@@ -147,9 +145,11 @@ class MostrarDatosContactoFragment : Fragment() {
             // Verificar si el contacto no es nulo
             contactos?.let {
                 // Actualizar los componentes de la interfaz de usuario con los nuevos datos del contacto
-                binding.textViewNombreCompleto.text = contactos.nombre
-                binding.editTelefono.text = contactos.numero
+                binding.textViewNombreCompleto.text = contactos.nombreCompleto
+                binding.textViewNombreUsuario.text = "@" + contactos.nombreUsuario
                 binding.textViewEmail.text = contactos.email
+                Glide.with(binding.root.context).load(contactos.imageUrl).apply(RequestOptions.circleCropTransform())
+                    .into(binding.imagenPerfil)
 
                 if (contactos.email.isNullOrEmpty()) {
                     binding.layoutSendEmail.visibility = View.GONE
@@ -184,50 +184,28 @@ class MostrarDatosContactoFragment : Fragment() {
         return participants.joinToString("")
     }
 
-    private fun deleteContact() {
-        val contact = elementosViewModel.contactoSelecionado().value
-        contact?.let {
-            val contactId = it.id
+    /*    private fun deleteContact() {
+            val contact = elementosViewModel.contactoSelecionado().value
+            contact?.let {
+                val contactId = it.id
 
-            val contentResolver: ContentResolver =
-                requireContext().contentResolver // Define la cláusula WHERE para seleccionar todos los "encabezados de contacto" con el ID específico
-            val rawContactSelection = "${ContactsContract.RawContacts.CONTACT_ID} = ?"
-            val rawContactSelectionArgs = arrayOf(contactId)
+                val contentResolver: ContentResolver =
+                    requireContext().contentResolver // Define la cláusula WHERE para seleccionar todos los "encabezados de contacto" con el ID específico
+                val rawContactSelection = "${ContactsContract.RawContacts.CONTACT_ID} = ?"
+                val rawContactSelectionArgs = arrayOf(contactId)
 
-            // Define la URI para eliminar todos los "encabezados de contacto" asociados a ese contacto
-            val rawContactUri = ContactsContract.RawContacts.CONTENT_URI
-            contentResolver.delete(rawContactUri, rawContactSelection, rawContactSelectionArgs)
+                // Define la URI para eliminar todos los "encabezados de contacto" asociados a ese contacto
+                val rawContactUri = ContactsContract.RawContacts.CONTENT_URI
+                contentResolver.delete(rawContactUri, rawContactSelection, rawContactSelectionArgs)
 
-            Toast.makeText(context, "Contacto eliminado correctamente", Toast.LENGTH_SHORT).show()
-            requireActivity().onBackPressedDispatcher.onBackPressed()
-        }
-    }
-
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            PERMISSION_REQUEST_WRITE_CONTACTS -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permiso concedido, procede con la eliminación del contacto
-                    deleteContact()
-                } else {
-                    // Permiso denegado, muestra un mensaje de error o toma alguna acción alternativa
-                    Toast.makeText(context, "Permiso denegado para escribir en contactos", Toast.LENGTH_SHORT).show()
-                }
+                Toast.makeText(context, "Contacto eliminado correctamente", Toast.LENGTH_SHORT).show()
+                requireActivity().onBackPressedDispatcher.onBackPressed()
             }
-        }
-    }
-
-
-    companion object {
-        private const val PERMISSION_REQUEST_WRITE_CONTACTS = 1001
-    }
+        } */
 
 
     override fun onDestroyView() {
         super.onDestroyView() // Limpiar el binding al destruir la vista
         _binding = null
     }
-
 }

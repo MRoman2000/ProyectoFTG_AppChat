@@ -5,38 +5,29 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipToPadding="false"
+    android:fitsSystemWindows="true"
     android:orientation="vertical"
     tools:context=".actividades.Registro">
 
-    <LinearLayout
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:background="?android:attr/windowBackground"
+        app:liftOnScroll="true"
+        tools:ignore="MissingConstraints">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/boton_back"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/round_background"
-            android:clickable="true"
-            android:clipToOutline="true"
-            android:foreground="?android:attr/selectableItemBackground"
-            android:outlineProvider="background"
-            android:padding="5dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_arrow_back" />
-
-
-        <TextView
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/materialToolbarRegistro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="25dp"
-            android:gravity="center"
-            android:text="Registrarse"
-            android:textSize="20sp" />
-    </LinearLayout>
+            app:layout_scrollEffect="compress"
+            app:layout_scrollFlags="scroll|enterAlways|snap"
+            app:title="Registrarse"
+            app:titleCentered="true" />
+    </com.google.android.material.appbar.AppBarLayout>
+
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -55,6 +46,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginTop="30dp"
                 android:padding="0dp"
+                app:prefixText="@"
                 app:startIconDrawable="@drawable/ic_user">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -62,6 +54,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:hint="Nombre de usuario"
+
                     android:imeOptions="actionNext"
                     android:importantForAutofill="no"
                     android:inputType="textPersonName"
@@ -113,6 +106,48 @@
                     android:nextFocusForward="@id/edit_text_fecha_nacimiento" />
             </com.google.android.material.textfield.TextInputLayout>
 
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/input_password"
+                style="@style/Widget.Material3.TextInputEditText.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="30dp"
+                android:padding="0dp"
+                app:endIconCheckable="false"
+                app:passwordToggleEnabled="true"
+                app:startIconDrawable="@drawable/ic_lock">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_text_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="30dp"
+                    android:hint="@string/password"
+                    android:inputType="textPassword"
+                    android:nextFocusForward="@id/edit_text_fecha_nacimiento" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/input_password_verti"
+                style="@style/Widget.Material3.TextInputEditText.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="30dp"
+                android:padding="0dp"
+                app:endIconCheckable="false"
+                app:passwordToggleEnabled="true"
+                app:startIconDrawable="@drawable/ic_lock">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editText_confirm_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="30dp"
+                    android:hint="Confirmar contraseña"
+                    android:inputType="textPassword"
+                    android:nextFocusForward="@id/edit_text_fecha_nacimiento" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/input_fecha_nacimiento"

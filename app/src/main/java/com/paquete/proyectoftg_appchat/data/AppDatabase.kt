@@ -4,9 +4,11 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.paquete.proyectoftg_appchat.model.Contactos
 import com.paquete.proyectoftg_appchat.model.DataUser
 
-@Database(entities = [DataUser::class], version = 3)
+@Database(entities = [DataUser::class, Contactos::class], version = 5)
+
 abstract class AppDatabase : RoomDatabase() {
     abstract fun datosDao(): DatosDao
 
@@ -16,7 +18,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance =
-                    Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "DataUser").fallbackToDestructiveMigration()
+                    Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "Datos").fallbackToDestructiveMigration()
                         .build()
                 INSTANCE = instance
                 instance
@@ -24,4 +26,5 @@ abstract class AppDatabase : RoomDatabase() {
         }
     }
 }
+
 

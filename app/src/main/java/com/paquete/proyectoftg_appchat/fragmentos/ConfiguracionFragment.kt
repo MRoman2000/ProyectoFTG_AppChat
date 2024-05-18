@@ -1,13 +1,13 @@
 package com.paquete.proyectoftg_appchat.fragmentos
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
@@ -16,9 +16,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
@@ -37,27 +37,24 @@ import com.google.firebase.storage.ktx.storage
 import com.paquete.proyectoftg_appchat.R
 import com.paquete.proyectoftg_appchat.actividades.SplashActivity
 import com.paquete.proyectoftg_appchat.data.AppDatabase
+import com.paquete.proyectoftg_appchat.data.ViewModel
 import com.paquete.proyectoftg_appchat.databinding.FragmentConfiguracionBinding
 import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.ProfileFragment
 import com.paquete.proyectoftg_appchat.fragmentos.profile_ui.SecurityFragment
-import com.paquete.proyectoftg_appchat.model.DataUser
-import com.paquete.proyectoftg_appchat.room.ElementosViewModel
 import com.paquete.proyectoftg_appchat.utils.FirebaseUtils
-import com.paquete.proyectoftg_appchat.utils.FirebaseUtils.Companion.signOut
 import com.paquete.proyectoftg_appchat.utils.Utils
-import com.paquete.proyectoftg_appchat.utils.Utils.Companion.updateUserStatusOffline
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.io.File
 
 
 class ConfiguracionFragment : Fragment() {
-    private val elementosViewModel by lazy {
-        ViewModelProvider(requireActivity())[ElementosViewModel::class.java]
+    private val viewModel by lazy {
+        ViewModelProvider(requireActivity())[ViewModel::class.java]
     }
-    private var userData: DataUser? = null
-    private val PREFS_KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
+
     private val PREFS_KEY_THEME = "theme_preference"
     private var _binding: FragmentConfiguracionBinding? = null
     private val storage = Firebase.storage
@@ -65,92 +62,86 @@ class ConfiguracionFragment : Fragment() {
     private lateinit var url: Uri
 
     private val binding get() = _binding!!
+    private lateinit var takePictureLauncher: ActivityResultLauncher<Uri>
 
-
-    private val takePicture = registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
-        if (isSuccess) {
-            saveImageUrlToFirebase(url)
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+        if (isGranted) {
+            takePictureLauncher.launch(url)
             Toast.makeText(requireContext(), "Foto capturada con éxito", Toast.LENGTH_SHORT).show()
         } else {
-            // Hubo un error al capturar la foto
+            // El usuario denegó el permiso de cámara, muestra un mensaje o realiza alguna acción apropiada
             Toast.makeText(requireContext(), "Error al capturar la foto", Toast.LENGTH_SHORT).show()
         }
     }
 
-    val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { url ->
-        if (url != null) {
-            saveImageUrlToFirebase(url)
-        }
-    }
-    private val requestCameraPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                // El usuario otorgó permiso de cámara, puedes proceder a capturar la foto
-                takePicture.launch(url)
-            } else {
-                // El usuario denegó el permiso de cámara, muestra un mensaje o realiza alguna acción apropiada
-                Toast.makeText(requireContext(), "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentConfiguracionBinding.inflate(inflater, container, false)
         val view = binding.root
         return view
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (requireActivity() as AppCompatActivity).supportActionBar?.title = "Configuracion"
-        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
+
+        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+            title = "Configuracion"
+            setDisplayHomeAsUpEnabled(false)
+        }
+
         val usuarioActual = FirebaseUtils.getCurrentUserId()
 
         url = createImageUri()
+        viewModel.obtenerDatosUsuarioActual(usuarioActual)
 
-        userData?.let {
-            loadImageFromUrl(it.imageUrl.toString(), binding.imagenPerfil)
-            binding.textNombreCompleto.text = it.nombreCompleto ?: ""
-        }
-
-        elementosViewModel.obtenerDatosYElementoUsuarioActual(usuarioActual).observe(viewLifecycleOwner) { datauser ->
-            datauser?.let {
-                userData = it
+        viewModel.dataUser.observe(viewLifecycleOwner) { dataUser ->
+            // Actualiza la interfaz de usuario con los datos del usuario actual
+            dataUser?.let {
                 loadImageFromUrl(it.imageUrl.toString(), binding.imagenPerfil)
-                binding.textNombreCompleto.text = it.nombreCompleto ?: ""
+                binding.editTextNombreUsuario.text = "@${it.nombreUsuario}"
+                binding.layoutProfile.setOnClickListener {
+                    val profileFragment = ProfileFragment()
+                    val bundle = Bundle()
+                    bundle.putParcelable("dataUser", dataUser)
+                    profileFragment.arguments = bundle
+                    Utils.navigateToFragment(requireActivity(), profileFragment)
+                }
             }
         }
 
 
-
-        binding.layoutProfile.setOnClickListener {
-            val profileFragment = ProfileFragment()
-            val bundle = Bundle()
-            bundle.putParcelable("userData", userData)
-            profileFragment.arguments = bundle
-            Utils.navigateToFragment(requireActivity(), profileFragment)
+        val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { url ->
+            if (url != null) {
+                saveImageUrlToFirebase(url)
+            }
+        }
+        
+        takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            // Aquí manejas el resultado de la captura de la imagen, por ejemplo, mostrando la imagen capturada
+            if (success) {
+                saveImageUrlToFirebase(url)
+            } else {
+                // La captura de la imagen falló
+            }
         }
 
-        binding.switchNotification.isChecked = areNotificationsEnabled()
+
+// Luego, actualiza la interfaz de usuario con los datos del usuario
+        /*  userData?.let {
+               loadImageFromUrl(it.imageUrl.toString(), binding.imagenPerfil)
+               binding.editTextNombreUsuario.text = "@${it.nombreUsuario}"
+           } */
+
 
         binding.layoutNotification.setOnClickListener {
             val intent = Intent().apply {
                 action = "android.settings.APP_NOTIFICATION_SETTINGS"
                 putExtra("android.provider.extra.APP_PACKAGE", activity?.packageName)
             }
-
             startActivity(intent)
-
         }
 
-        binding.switchNotification.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                setNotificationsEnabled(true)
-            } else {
-                setNotificationsEnabled(false)
-            }
-        }
 
         binding.layoutAparencia.setOnClickListener {
             cambiarTema()
@@ -162,33 +153,33 @@ class ConfiguracionFragment : Fragment() {
         }
 
         binding.editFoto.setOnClickListener {
-            showOptionsDialog()
-
+            val options = arrayOf<CharSequence>("Tomar foto", "Elegir de la galería", "Cancelar")
+            MaterialAlertDialogBuilder(requireActivity()).setTitle("Elige una opción").setItems(options) { _, item ->
+                when (options[item]) {
+                    "Tomar foto" ->  requestCameraPermission(url)
+                    "Elegir de la galería" -> pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
+            }.show()
         }
 
         binding.layoutLogout.setOnClickListener {
             cerrarSesion()
         }
+
+
     }
 
-
-    private fun showOptionsDialog() {
-        val options = arrayOf<CharSequence>("Tomar foto", "Elegir de la galería", "Cancelar")
-        MaterialAlertDialogBuilder(requireActivity()).setTitle("Elige una opción").setItems(options) { _, item ->
-            when (options[item]) {
-                "Tomar foto" -> requestCameraPermission()
-                "Elegir de la galería" -> pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    private fun requestCameraPermission(photoUri: Uri) {
+        try {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                // El permiso de cámara fue otorgado, puedes proceder a capturar la foto
+                takePictureLauncher.launch(photoUri)
+            } else {
+                // El permiso de cámara no ha sido otorgado, solicitar permiso
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
-        }.show()
-    }
-
-    private fun requestCameraPermission() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            // El permiso de cámara ya está otorgado, puedes proceder a capturar la foto
-            takePicture.launch(url)
-        } else {
-            // El permiso de cámara aún no se ha otorgado, solicita el permiso al usuario
-            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -221,7 +212,7 @@ class ConfiguracionFragment : Fragment() {
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
                 }
             }
-            // Finaliza la actividad actual para que los cambios de tema tengan efecto
+
             requireActivity().recreate()
             dialog.dismiss()
         }
@@ -229,8 +220,7 @@ class ConfiguracionFragment : Fragment() {
     }
 
     private fun saveImageUrlToFirebase(imageUri: Uri) {
-        val usuarioActual = FirebaseUtils.getCurrentUserId()
-
+        val usuarioActual = FirebaseAuth.getInstance().currentUser
         val imagesRef = storageRef.child("profile_user/$usuarioActual")
 
         // Subir el archivo de imagen al Firebase Storage
@@ -242,9 +232,7 @@ class ConfiguracionFragment : Fragment() {
 
                 // Actualizar la URL de la imagen en Firestore
                 saveImageUrlToFirestore(downloadUrl)
-
                 // Actualizar la URL de la imagen en la base de datos Room
-                val usuarioActual = FirebaseAuth.getInstance().currentUser
                 usuarioActual?.uid?.let { userId ->
                     CoroutineScope(Dispatchers.Main).launch {
                         val userDao = AppDatabase.getDatabase(requireContext()).datosDao()
@@ -291,16 +279,6 @@ class ConfiguracionFragment : Fragment() {
     }
 
 
-    private fun setNotificationsEnabled(enabled: Boolean) {
-        val sharedPreferences = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        sharedPreferences.edit().putBoolean(PREFS_KEY_NOTIFICATIONS_ENABLED, enabled).apply()
-    }
-
-    private fun areNotificationsEnabled(): Boolean {
-        val sharedPreferences = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        return sharedPreferences.getBoolean(PREFS_KEY_NOTIFICATIONS_ENABLED, true)
-    }
-
     private fun setThemeMode(themeMode: Int) {
         val sharedPreferences = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         sharedPreferences.edit().putInt(PREFS_KEY_THEME, themeMode).apply()
@@ -310,38 +288,38 @@ class ConfiguracionFragment : Fragment() {
         Glide.with(this).load(imageUrl).apply(RequestOptions.circleCropTransform()).into(imageView)
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+
+    private fun signOut() {
+        FirebaseUtils.signOut()
+        val intent = Intent(context, SplashActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val options = ActivityOptions.makeCustomAnimation(requireContext(), R.anim.slide_in_right, R.anim.slide_out_left)
+        startActivity(intent, options.toBundle())
     }
 
 
-    fun cerrarSesion() {
+    private fun cerrarSesion() {
         MaterialAlertDialogBuilder(requireContext()).apply {
             setTitle("Cerrar sesión")
             setMessage("¿Estás seguro de que quieres cerrar sesión?")
             setPositiveButton("Sí") { _, _ ->
                 lifecycleScope.launch {
-                    FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            updateUserStatusOffline()
-                            signOut()
-                        } else {
-                            Log.e(ContentValues.TAG, "Error al eliminar el token FCM", task.exception)
-                        }
+                    try {
+                        FirebaseMessaging.getInstance().deleteToken().await() // Esperar a que se complete la eliminación del token FCM
+                        Utils.updateUserStatusOffline() // Actualizar el estado del usuario
+                        signOut()// Cerrar sesión
+                        viewModel.eliminarTablaContactos()
+                        Toast.makeText(requireContext(), "Sesion cerrada con éxito", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Log.e("cerrarSesion", "Error al cerrar sesión", e)
+                        Toast.makeText(requireContext(), "Error al cerrar sesión", Toast.LENGTH_SHORT).show()
                     }
-
-                    val intent = Intent(context, SplashActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    }
-                    val options = ActivityOptions.makeCustomAnimation(requireContext(), R.anim.slide_in_right, R.anim.slide_out_left)
-                    startActivity(intent, options.toBundle())
                 }
             }
             setNegativeButton("No") { _, _ -> }
         }.show()
     }
-
 }
 
 
